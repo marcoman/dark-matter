@@ -16,6 +16,8 @@ app.secret_key = os.environ.get("SECRET_KEY", "dark-matter-dev-secret-change-in-
 
 # LaunchDarkly client (lazy init)
 _ld_client = None
+# Track which contexts we've attached a BG color listener for
+_bg_color_listener_context_keys: set[str] = set()
 
 
 def get_ld_client():
@@ -50,6 +52,22 @@ def get_feature_flags(user_name: str) -> dict:
     ctx = get_ld_context(user_name)
     if not ctx:
         return flags
+    # Attach a flag-specific listener for MAM_BG_COLOR for this context once
+    try:
+        if ctx.key not in _bg_color_listener_context_keys:
+            def _on_bg_color_change(change):
+                # change has .key, .old_value, .new_value
+                print(
+                    f"[LaunchDarkly] MAM_BG_COLOR changed for {ctx.key}: "
+                    f"{change.old_value!r} -> {change.new_value!r}",
+                    flush=True,
+                )
+
+            client.flag_tracker.add_flag_value_change_listener("MAM_BG_COLOR", ctx, _on_bg_color_change)
+            _bg_color_listener_context_keys.add(ctx.key)
+    except Exception:
+        # Listener attachment failure should not break the app; continue with defaults/eval
+        pass
     try:
         flags["MAM_ABOUT"] = client.variation("MAM_ABOUT", ctx, False)
         flags["MAM_BG_COLOR"] = client.variation("MAM_BG_COLOR", ctx, "white") or "white"
