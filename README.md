@@ -127,9 +127,31 @@ I happen to have this envvar set up in my ~/.bashrc.
 | Docker        | `docker build -t dark-matter .` then `docker run -p 5000:5000 -e LAUNCHDARKLY_SDK_KEY=... dark-matter` |
 
 
-## Future Ideas
-
-When time permits, I'd like to do the following:
+## Next Steps
+Per the ingredients, and when time permits, I'd like or need to do the following:
+- Implement a curl command to toggle the state of my feature flag.
+- Test a context attribute
+   - Demonstrate individual targeting
+   - Demonstrate rule-based targeting
+- Metrics
+   - Create a metric for one of my FF
+   - Create an experiment that uses one of my FF and the metric.
+   - Run the experiment long enough to gather data to make an informed decision.
+- AI Configs
+   - Implmenent an AI configuration in my application to change prompts
+   - Test variations of prompts and models to see which is most effective, based on metrics.
+   - (Time sounds like a good one.)
+   - For fun, maybe create a metric based on the size of the payload.
+- Integrations
+   - Explore one of the many integrations
+   - See https://launchdarkly.com/docs/integrations
+   - Maybe: CloudTrail Lake (I haven't tested this before)
+   - Maybe: Elk (I would need to provision an Elk stack)
+   - GHA: Flag evaluations?  That would be new to mem.
+   - GHA find references
+   - GHA Copilot with VSCode
+   - GH code referencces
+   - Maybe the point is: there is quite a lot to explore.
 - Create a terraform script to deploy to my AWS instance.
    - I'll use my envvars to drive the TF script for my AWS secrets
    - I'll likely deploy to ECS
