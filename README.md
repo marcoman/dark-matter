@@ -1,6 +1,13 @@
 # Dark Matter
 
-A simple Flask application with multi-page navigation and LaunchDarkly feature flags. You log in with your name only (no password), then move between four pages (upper-left, upper-right, lower-left, lower-right) using "Right", "Left", "Up", and "Down" links. Feature flags control whether an "About" page is visible and the default background color.
+Welcome to my humble project.  This is a simple Flask application with multi-page navigation and LaunchDarkly feature flags. 
+
+You log in with your name only (no password), then move between four pages (upper-left, upper-right, lower-left, lower-right) using "Right", "Left", "Up", and "Down" links. 
+
+I am implementing a few feature flags and other capabilities per the LD capabilities.  For example: 
+- Feature flags control whether an "About" page is visible 
+- The default background color.
+- Others TBD
 
 ## What this application does
 
@@ -22,7 +29,15 @@ The LaunchDarkly SDK key is read from the environment variable **`LAUNCHDARKLY_S
 
 ---
 
+## My Stack
+I developed this code on a Win11 machine with WSL enabled.
+The primary OS is Ubuntu 24.
+Python verison 3.12.3
+Virtual env.
+
 ## Prompt used to create this application
+
+This is not the only prompt, but rather the first one that got things started.
 
 > Let's create a python application named "dark-matter"
 >
@@ -74,6 +89,7 @@ The LaunchDarkly SDK key is read from the environment variable **`LAUNCHDARKLY_S
    ```bash
    export LAUNCHDARKLY_SDK_KEY=sdk-xxxx-your-key
    ```
+I happen to have this envvar set up in my ~/.bashrc.
 
 4. Run the app:
    ```bash
@@ -109,3 +125,13 @@ The LaunchDarkly SDK key is read from the environment variable **`LAUNCHDARKLY_S
 |---------------|-------------------------------------------------------------|
 | Local Python  | `pip install -r requirements.txt` then `python app.py`     |
 | Docker        | `docker build -t dark-matter .` then `docker run -p 5000:5000 -e LAUNCHDARKLY_SDK_KEY=... dark-matter` |
+
+
+## Future Ideas
+
+When time permits, I'd like to do the following:
+- Create a terraform script to deploy to my AWS instance.
+   - I'll use my envvars to drive the TF script for my AWS secrets
+   - I'll likely deploy to ECS
+   - Deploy 2 instances, and see about targeting one instance with FF.  This will require me to better understand how to use LD.
+
