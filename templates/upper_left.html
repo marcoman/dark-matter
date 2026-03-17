@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Upper Left - Dark Matter{% endblock %}
+{% block body %}
+<div class="header">
+    <span class="user">Hello, {{ name }}</span>
+    <a href="{{ url_for('logout') }}" class="btn btn-ghost">Logout</a>
+</div>
+{% if name and show_about %}<p class="nav-about"><a href="{{ url_for('about') }}">About</a></p>{% endif %}
+{% if from_page %}<p class="from-page">You came from: {{ from_page }}</p>{% endif %}
+<div class="card">
+    <h2>Upper Left</h2>
+    {% set nav_up = none %}
+    {% set nav_down = url_for('lower_left') %}
+    {% set nav_left = none %}
+    {% set nav_right = url_for('upper_right') %}
+    {% include '_compass_nav.html' %}
+</div>
+{% endblock %}

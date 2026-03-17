@@ -1,0 +1,13 @@
+{# Only render when user is logged in (name is set). Pass nav_up, nav_down, nav_left, nav_right (url or none). #}
+{% if name %}
+<div class="compass-wrap">
+    <p class="from-page" style="margin-bottom: 0.5rem;">Navigate</p>
+    <div class="compass">
+        <span class="up {% if not nav_up %}disabled{% endif %}">{% if nav_up %}<a href="{{ nav_up }}">Up</a>{% else %}Up{% endif %}</span>
+        <span class="left {% if not nav_left %}disabled{% endif %}">{% if nav_left %}<a href="{{ nav_left }}">Left</a>{% else %}Left{% endif %}</span>
+        <span class="center">·</span>
+        <span class="right {% if not nav_right %}disabled{% endif %}">{% if nav_right %}<a href="{{ nav_right }}">Right</a>{% else %}Right{% endif %}</span>
+        <span class="down {% if not nav_down %}disabled{% endif %}">{% if nav_down %}<a href="{{ nav_down }}">Down</a>{% else %}Down{% endif %}</span>
+    </div>
+</div>
+{% endif %}
