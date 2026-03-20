@@ -45,7 +45,7 @@ def get_ld_context(user_name: str) -> Context | None:
 
 
 def get_feature_flags(user_name: str) -> dict:
-    flags = {"MAM_ABOUT": False, "MAM_BG_COLOR": "white"}
+    flags = {"MAM_ABOUT": False, "MAM_BG_COLOR": "white", "MAM_TOGGLE_CASE": False}
     client = get_ld_client()
     if not client or not client.is_initialized():
         return flags
@@ -71,6 +71,7 @@ def get_feature_flags(user_name: str) -> dict:
     try:
         flags["MAM_ABOUT"] = client.variation("MAM_ABOUT", ctx, False)
         flags["MAM_BG_COLOR"] = client.variation("MAM_BG_COLOR", ctx, "white") or "white"
+        flags["MAM_TOGGLE_CASE"] = client.variation("MAM_TOGGLE_CASE", ctx, False)
     except Exception:
         pass
     return flags
@@ -97,6 +98,7 @@ def login():
             return render_template("login.html", error="Please enter your name.")
         session["name"] = name
         session["from_page"] = None
+        session["nav_case"] = "lower"
         return redirect(url_for("upper_left"))
     if session.get("name"):
         return redirect(url_for("upper_left"))
@@ -107,6 +109,19 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for("login"))
+
+
+@app.route("/toggle-nav-case", methods=["POST"])
+@require_login
+def toggle_nav_case():
+    flags = get_feature_flags(session["name"])
+    if flags["MAM_TOGGLE_CASE"]:
+        current = session.get("nav_case", "lower")
+        session["nav_case"] = "upper" if current == "lower" else "lower"
+    next_page = request.form.get("next_page")
+    if next_page:
+        return redirect(next_page)
+    return redirect(url_for("upper_left"))
 
 
 @app.route("/upper-left")
@@ -121,6 +136,9 @@ def upper_left():
         from_page=from_page,
         show_about=flags["MAM_ABOUT"],
         bg_color=flags["MAM_BG_COLOR"],
+        show_toggle_case=flags["MAM_TOGGLE_CASE"],
+        nav_case_upper=session.get("nav_case", "lower") == "upper",
+        current_path=request.path,
     )
 
 
@@ -136,6 +154,9 @@ def upper_right():
         from_page=from_page,
         show_about=flags["MAM_ABOUT"],
         bg_color=flags["MAM_BG_COLOR"],
+        show_toggle_case=flags["MAM_TOGGLE_CASE"],
+        nav_case_upper=session.get("nav_case", "lower") == "upper",
+        current_path=request.path,
     )
 
 
@@ -151,6 +172,9 @@ def lower_left():
         from_page=from_page,
         show_about=flags["MAM_ABOUT"],
         bg_color=flags["MAM_BG_COLOR"],
+        show_toggle_case=flags["MAM_TOGGLE_CASE"],
+        nav_case_upper=session.get("nav_case", "lower") == "upper",
+        current_path=request.path,
     )
 
 
@@ -166,6 +190,9 @@ def lower_right():
         from_page=from_page,
         show_about=flags["MAM_ABOUT"],
         bg_color=flags["MAM_BG_COLOR"],
+        show_toggle_case=flags["MAM_TOGGLE_CASE"],
+        nav_case_upper=session.get("nav_case", "lower") == "upper",
+        current_path=request.path,
     )
 
 

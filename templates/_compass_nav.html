@@ -2,12 +2,24 @@
 {% if name %}
 <div class="compass-wrap">
     <p class="from-page" style="margin-bottom: 0.5rem;">Navigate</p>
+    {% set label_up = "UP" if nav_case_upper else "up" %}
+    {% set label_down = "DOWN" if nav_case_upper else "down" %}
+    {% set label_left = "LEFT" if nav_case_upper else "left" %}
+    {% set label_right = "RIGHT" if nav_case_upper else "right" %}
     <div class="compass">
-        <span class="up {% if not nav_up %}disabled{% endif %}">{% if nav_up %}<a href="{{ nav_up }}">Up</a>{% else %}Up{% endif %}</span>
-        <span class="left {% if not nav_left %}disabled{% endif %}">{% if nav_left %}<a href="{{ nav_left }}">Left</a>{% else %}Left{% endif %}</span>
+        <span class="up {% if not nav_up %}disabled{% endif %}">{% if nav_up %}<a href="{{ nav_up }}">{{ label_up }}</a>{% else %}{{ label_up }}{% endif %}</span>
+        <span class="left {% if not nav_left %}disabled{% endif %}">{% if nav_left %}<a href="{{ nav_left }}">{{ label_left }}</a>{% else %}{{ label_left }}{% endif %}</span>
         <span class="center">·</span>
-        <span class="right {% if not nav_right %}disabled{% endif %}">{% if nav_right %}<a href="{{ nav_right }}">Right</a>{% else %}Right{% endif %}</span>
-        <span class="down {% if not nav_down %}disabled{% endif %}">{% if nav_down %}<a href="{{ nav_down }}">Down</a>{% else %}Down{% endif %}</span>
+        <span class="right {% if not nav_right %}disabled{% endif %}">{% if nav_right %}<a href="{{ nav_right }}">{{ label_right }}</a>{% else %}{{ label_right }}{% endif %}</span>
+        <span class="down {% if not nav_down %}disabled{% endif %}">{% if nav_down %}<a href="{{ nav_down }}">{{ label_down }}</a>{% else %}{{ label_down }}{% endif %}</span>
     </div>
+    {% if show_toggle_case %}
+    <form method="post" action="{{ url_for('toggle_nav_case') }}" style="text-align: center; margin-top: 1rem;">
+        <input type="hidden" name="next_page" value="{{ current_path }}">
+        <button type="submit" class="btn btn-primary">
+            {% if nav_case_upper %}SWITCH->case{% else %}switch->CASE{% endif %}
+        </button>
+    </form>
+    {% endif %}
 </div>
 {% endif %}
