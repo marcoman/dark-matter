@@ -12,7 +12,7 @@ I am implementing a few feature flags and other capabilities per the LD capabili
 ## What this application does
 
 - **Login**: Enter your name on the login page; no password is required.
-- **Navigation**: After login you land on **Upper Left**. From there you can go **Right** (to Upper Right) or **Down** (to Lower Left). Each of the four corners has two links that follow the same grid (left/right and up/down).
+- **Navigation**: After login you land on **Upper Left**. From there you can go **Right** (to Upper Right) or **Down** (to Lower Left). Each of the four corners has two links that follow the same grid (left/right and up/down). Clicks are routed through `/nav/go/...` so LaunchDarkly can record custom events for metrics.
 - **Upper Left** → Right: Upper Right; Down: Lower Left  
 - **Upper Right** → Left: Upper Left; Down: Lower Right  
 - **Lower Left** → Right: Lower Right; Up: Upper Left  
@@ -24,8 +24,34 @@ I am implementing a few feature flags and other capabilities per the LD capabili
 
 - **MAM_ABOUT** (boolean): When enabled, an “About” link appears and the About page is accessible. That page shows the application name, system details (Python version, OS, memory, CPU), the author name, and the libraries used.
 - **MAM_BG_COLOR**: Sets the default background color for the app. The default is `white`; the value should be a standard HTML color name (e.g. `white`, `lightgray`, `lightblue`).
+- **MAM_TOGGLE_CASE** (boolean): When enabled, a button appears on navigation pages to toggle compass link labels between lower and upper case (for experiments).
 
-The LaunchDarkly SDK key is read from the environment variable **`LAUNCHDARKLY_SDK_KEY`** (you may have referred to it as `LAUNCHCDARKLY_SDK_KEY`; the app uses `LAUNCHDARKLY_SDK_KEY`).
+The LaunchDarkly SDK key is read from the environment variable **`LAUNCHDARKLY_SDK_KEY`**.
+
+### Navigation custom events (metrics)
+
+Compass clicks go through **`GET /nav/go/<direction>`** (`up`, `down`, `left`, `right`). Each valid click sends a LaunchDarkly custom event via `LDClient.track()`:
+
+| Event key | When it fires |
+|-----------|----------------|
+| `nav_click_up` | User chose **Up** from a page where that move is allowed |
+| `nav_click_down` | User chose **Down** |
+| `nav_click_left` | User chose **Left** |
+| `nav_click_right` | User chose **Right** |
+
+Each `nav_click_*` event includes `data`: `from_page`, `to_page` (slugs like `upper-left`).
+
+Case preference is **not** attached to compass clicks anymore. Use the toggle event instead:
+
+| Event key | When it fires |
+|-----------|----------------|
+| `nav_case_toggle_clicked` | User clicked **switch->CASE** / **SWITCH->case** (only when `MAM_TOGGLE_CASE` is enabled) |
+
+`nav_case_toggle_clicked` includes `data`: `previous_case`, `new_case` (`lower` or `upper`), and `from_page`.
+
+**Event filters in LaunchDarkly:** reference custom data fields on the event (e.g. `new_case`, `from_page`) depending on your UI; naming often matches the keys sent in `track(..., data={...})`.
+
+In LaunchDarkly, create **custom metrics** that count these event keys (e.g. one per `nav_click_*` direction, plus one for `nav_case_toggle_clicked`). Attach them to your experiment as needed.
 
 ---
 
@@ -72,12 +98,20 @@ This is not the only prompt, but rather the first one that got things started.
 - Optional: Docker (for container run)
 - Optional: LaunchDarkly project and SDK key for feature flags
 
+### Environment variables:
+
+I use these envvars to direct my application.  Of course, I don't have my secrets here, but I do state how big each field is.
+
+- export LAUNCHDARKLY_SDK_KEY=sdk-8chars-4chars-4chars-4chars-12chars
+- export LAUNCHDARKLY_API_KEY=api-8chars-4chars-4chars-4chars-12chars
+
+
 ### Run from the command line (Python 3)
 
 1. Create a virtual environment (recommended):
    ```bash
    python3 -m venv venv
-   source venv/bin/activate   # Windows: venv\Scripts\activate
+   source venv/bin/activate
    ```
 
 2. Install dependencies:
@@ -95,7 +129,7 @@ I happen to have this envvar set up in my ~/.bashrc.
    ```bash
    python app.py
    ```
-   The app listens on `http://0.0.0.0:5000`. Open that URL in your browser.
+   The app listens on `http://127.0.0.1:5000`. Open that URL in your browser.
 
 5. Optional: set a secret key for production and/or port:
    ```bash
@@ -128,11 +162,10 @@ I happen to have this envvar set up in my ~/.bashrc.
 
 
 ## Next Steps
+
+These are notes to self, and some are aspirational.
+
 Per the ingredients, and when time permits, I'd like or need to do the following:
-- Implement a curl command to toggle the state of my feature flag.
-- Test a context attribute
-   - Demonstrate individual targeting
-   - Demonstrate rule-based targeting
 - Metrics
    - Create a metric for one of my FF
    - Create an experiment that uses one of my FF and the metric.
@@ -156,4 +189,11 @@ Per the ingredients, and when time permits, I'd like or need to do the following
    - I'll use my envvars to drive the TF script for my AWS secrets
    - I'll likely deploy to ECS
    - Deploy 2 instances, and see about targeting one instance with FF.  This will require me to better understand how to use LD.
+
+## Notes
+
+- I  tested some CURL commands, the REST API docs look to be small.
+- I am testing the CLI
+   - https://github.com/launchdarkly/ldcli
+   - Of course, I prefer the straight CLI over the npm cli
 

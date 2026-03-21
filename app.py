@@ -19,6 +19,27 @@ _ld_client = None
 # Track which contexts we've attached a BG color listener for
 _bg_color_listener_context_keys: set[str] = set()
 
+# Session `from_page` slug -> valid direction -> (Flask endpoint name, target slug for metrics)
+_NAV_TRANSITIONS: dict[str, dict[str, tuple[str, str]]] = {
+    "upper-left": {
+        "right": ("upper_right", "upper-right"),
+        "down": ("lower_left", "lower-left"),
+    },
+    "upper-right": {
+        "left": ("upper_left", "upper-left"),
+        "down": ("lower_right", "lower-right"),
+    },
+    "lower-left": {
+        "right": ("lower_right", "lower-right"),
+        "up": ("upper_left", "upper-left"),
+    },
+    "lower-right": {
+        "up": ("upper_right", "upper-right"),
+        "left": ("lower_left", "lower-left"),
+    },
+}
+_VALID_NAV_DIRECTIONS = frozenset({"up", "down", "left", "right"})
+
 
 def get_ld_client():
     global _ld_client
@@ -77,6 +98,49 @@ def get_feature_flags(user_name: str) -> dict:
     return flags
 
 
+def track_nav_click(user_name: str, direction: str, from_slug: str, to_slug: str) -> None:
+    """Send a LaunchDarkly custom event for compass navigation (custom metrics in LD)."""
+    client = get_ld_client()
+    if not client or not client.is_initialized():
+        return
+    ctx = get_ld_context(user_name)
+    if not ctx:
+        return
+    try:
+        client.track(
+            f"nav_click_{direction}",
+            ctx,
+            data={
+                "from_page": from_slug,
+                "to_page": to_slug,
+            },
+        )
+    except Exception:
+        pass
+
+
+def track_nav_case_toggle(user_name: str, previous_case: str, new_case: str) -> None:
+    """LaunchDarkly custom event when the switch-case button is used (separate from nav_click_*)."""
+    client = get_ld_client()
+    if not client or not client.is_initialized():
+        return
+    ctx = get_ld_context(user_name)
+    if not ctx:
+        return
+    try:
+        client.track(
+            "nav_case_toggle_clicked",
+            ctx,
+            data={
+                "previous_case": previous_case,
+                "new_case": new_case,
+                "from_page": session.get("from_page"),
+            },
+        )
+    except Exception:
+        pass
+
+
 def require_login(f):
     """Redirect to login if no session name."""
     from functools import wraps
@@ -117,11 +181,34 @@ def toggle_nav_case():
     flags = get_feature_flags(session["name"])
     if flags["MAM_TOGGLE_CASE"]:
         current = session.get("nav_case", "lower")
-        session["nav_case"] = "upper" if current == "lower" else "lower"
+        new_case = "upper" if current == "lower" else "lower"
+        track_nav_case_toggle(session["name"], current, new_case)
+        session["nav_case"] = new_case
     next_page = request.form.get("next_page")
     if next_page:
         return redirect(next_page)
     return redirect(url_for("upper_left"))
+
+
+@app.route("/nav/go/<direction>")
+@require_login
+def nav_go(direction: str):
+    """Compass clicks: validate move, track LaunchDarkly event, redirect to destination."""
+    d = (direction or "").lower()
+    if d not in _VALID_NAV_DIRECTIONS:
+        return redirect(url_for("upper_left"))
+
+    current = session.get("from_page")
+    if current not in _NAV_TRANSITIONS:
+        current = "upper-left"
+
+    edges = _NAV_TRANSITIONS.get(current) or {}
+    if d not in edges:
+        return redirect(url_for("upper_left"))
+
+    endpoint, to_slug = edges[d]
+    track_nav_click(session["name"], d, current, to_slug)
+    return redirect(url_for(endpoint))
 
 
 @app.route("/upper-left")

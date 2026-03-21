@@ -9,10 +9,10 @@
 {% if from_page %}<p class="from-page">You came from: {{ from_page }}</p>{% endif %}
 <div class="card">
     <h2>Upper Right</h2>
-    {% set nav_up = none %}
-    {% set nav_down = url_for('lower_right') %}
-    {% set nav_left = url_for('upper_left') %}
-    {% set nav_right = none %}
+    {% set nav_up = false %}
+    {% set nav_down = true %}
+    {% set nav_left = true %}
+    {% set nav_right = false %}
     {% include '_compass_nav.html' %}
 </div>
 {% endblock %}
