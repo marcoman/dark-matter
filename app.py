@@ -225,7 +225,6 @@ def upper_left():
         bg_color=flags["MAM_BG_COLOR"],
         show_toggle_case=flags["MAM_TOGGLE_CASE"],
         nav_case_upper=session.get("nav_case", "lower") == "upper",
-        current_path=request.path,
     )
 
 
@@ -243,7 +242,6 @@ def upper_right():
         bg_color=flags["MAM_BG_COLOR"],
         show_toggle_case=flags["MAM_TOGGLE_CASE"],
         nav_case_upper=session.get("nav_case", "lower") == "upper",
-        current_path=request.path,
     )
 
 
@@ -261,7 +259,6 @@ def lower_left():
         bg_color=flags["MAM_BG_COLOR"],
         show_toggle_case=flags["MAM_TOGGLE_CASE"],
         nav_case_upper=session.get("nav_case", "lower") == "upper",
-        current_path=request.path,
     )
 
 
@@ -279,7 +276,6 @@ def lower_right():
         bg_color=flags["MAM_BG_COLOR"],
         show_toggle_case=flags["MAM_TOGGLE_CASE"],
         nav_case_upper=session.get("nav_case", "lower") == "upper",
-        current_path=request.path,
     )
 
 
@@ -307,6 +303,9 @@ def about():
         libraries=libraries,
         author="Marco",
         bg_color=flags["MAM_BG_COLOR"],
+        show_about=True,
+        show_toggle_case=flags["MAM_TOGGLE_CASE"],
+        nav_case_upper=session.get("nav_case", "lower") == "upper",
     )
 
 

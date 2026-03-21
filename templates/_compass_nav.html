@@ -13,13 +13,5 @@
         <span class="right {% if not nav_right %}disabled{% endif %}">{% if nav_right %}<a href="{{ url_for('nav_go', direction='right') }}">{{ label_right }}</a>{% else %}{{ label_right }}{% endif %}</span>
         <span class="down {% if not nav_down %}disabled{% endif %}">{% if nav_down %}<a href="{{ url_for('nav_go', direction='down') }}">{{ label_down }}</a>{% else %}{{ label_down }}{% endif %}</span>
     </div>
-    {% if show_toggle_case %}
-    <form method="post" action="{{ url_for('toggle_nav_case') }}" style="text-align: center; margin-top: 1rem;">
-        <input type="hidden" name="next_page" value="{{ current_path }}">
-        <button type="submit" class="btn btn-primary">
-            {% if nav_case_upper %}SWITCH->case{% else %}switch->CASE{% endif %}
-        </button>
-    </form>
-    {% endif %}
 </div>
 {% endif %}

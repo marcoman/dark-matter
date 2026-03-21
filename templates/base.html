@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: {{ bg_color|default('white') }};
             --surface: #ffffff;
             --text: #1a1a2e;
             --text-muted: #64748b;
@@ -25,25 +24,64 @@
             font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
             margin: 0;
             min-height: 100vh;
-            background: var(--bg);
+            background: #ffffff;
             color: var(--text);
             font-size: 1rem;
             line-height: 1.6;
         }
+        /* Feature-flag background applies only to the top banner */
+        .banner {
+            width: 100%;
+            padding: 1rem 1.5rem 1.25rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+        }
+        .banner-inner {
+            max-width: 56rem;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem 1rem;
+        }
+        /* Light panel: text reads the same regardless of MAM_BG_COLOR behind the banner */
+        .banner-screen {
+            display: inline-flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem 1rem;
+            padding: 0.5rem 1rem;
+            background: #f1f5f9;
+            border: 1px solid rgba(15, 23, 42, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+        }
+        .banner-screen--grow {
+            flex: 1 1 auto;
+            min-width: min(100%, 14rem);
+        }
+        .banner-screen .user { font-weight: 600; color: var(--text); }
+        .banner-screen a:not(.btn) { font-weight: 500; }
+        .banner-screen .btn-ghost {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid var(--border);
+        }
+        .banner-screen .btn-ghost:hover {
+            background: #ffffff;
+        }
+        .banner-screen__sep {
+            width: 1px;
+            height: 1.25rem;
+            background: var(--border);
+            flex-shrink: 0;
+        }
+        .banner-toggle form { margin: 0; }
         .app {
             max-width: 56rem;
             margin: 0 auto;
             padding: 2rem 1.5rem;
+            background: #ffffff;
         }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border);
-        }
-        .header .user { font-weight: 600; color: var(--text); }
         .btn {
             display: inline-block;
             padding: 0.5rem 1rem;
@@ -56,8 +94,8 @@
             cursor: pointer;
             transition: background .15s, color .15s;
         }
-        .btn-ghost { background: transparent; color: var(--text-muted); }
-        .btn-ghost:hover { background: var(--border); color: var(--text); }
+        .btn-ghost { background: rgba(0, 0, 0, 0.06); color: var(--text); }
+        .btn-ghost:hover { background: rgba(0, 0, 0, 0.1); color: var(--text); text-decoration: none; }
         .btn-primary {
             background: var(--accent);
             color: white;
@@ -69,6 +107,7 @@
             box-shadow: var(--shadow);
             padding: 1.5rem 2rem;
             margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
         }
         .from-page {
             color: var(--text-muted);
@@ -79,7 +118,6 @@
         h2 { font-size: 1.25rem; font-weight: 600; margin: 0 0 1rem 0; color: var(--text); }
         a { color: var(--accent); text-decoration: none; font-weight: 500; }
         a:hover { text-decoration: underline; }
-        /* Compass nav: only shown when user is logged in */
         .compass-wrap {
             margin-top: 2rem;
             padding-top: 1.5rem;
@@ -115,11 +153,34 @@
             font-weight: 500;
             padding: 0.5rem 1rem;
         }
-        .nav-about { margin-bottom: 1rem; }
     </style>
     {% block head %}{% endblock %}
 </head>
 <body>
+    {% if name %}
+    <header class="banner" style="background-color: {{ bg_color|default('white') }};">
+        <div class="banner-inner">
+            <div class="banner-screen banner-screen--grow">
+                <span class="user">Hello, {{ name }}</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-ghost">Logout</a>
+                {% if show_about and request.endpoint != 'about' %}
+                <span class="banner-screen__sep" aria-hidden="true"></span>
+                <a href="{{ url_for('about') }}">About</a>
+                {% endif %}
+            </div>
+            {% if show_toggle_case %}
+            <div class="banner-screen banner-toggle">
+                <form method="post" action="{{ url_for('toggle_nav_case') }}">
+                    <input type="hidden" name="next_page" value="{{ request.path }}">
+                    <button type="submit" class="btn btn-primary">
+                        {% if nav_case_upper %}SWITCH->case{% else %}switch->CASE{% endif %}
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </header>
+    {% endif %}
     <div class="app">
         {% block body %}{% endblock %}
     </div>

@@ -1,11 +1,7 @@
 {% extends "base.html" %}
 {% block title %}About - Dark Matter{% endblock %}
 {% block body %}
-<div class="header">
-    <span class="user">Hello, {{ name }}</span>
-    <a href="{{ url_for('logout') }}" class="btn btn-ghost">Logout</a>
-</div>
-{% if name %}<p class="nav-about"><a href="{{ url_for('upper_left') }}">← Back to Upper Left</a></p>{% endif %}
+<p class="from-page"><a href="{{ url_for('upper_left') }}">← Back to Upper Left</a></p>
 <div class="card">
     <h1>About Dark Matter</h1>
     <p>Dark Matter is a simple Flask application with feature-flagged navigation and an about page.</p>

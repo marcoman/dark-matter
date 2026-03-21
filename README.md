@@ -6,7 +6,7 @@ You log in with your name only (no password), then move between four pages (uppe
 
 I am implementing a few feature flags and other capabilities per the LD capabilities.  For example: 
 - Feature flags control whether an "About" page is visible 
-- The default background color.
+- The top banner background color (main page area stays white).
 - Others TBD
 
 ## What this application does
@@ -23,7 +23,7 @@ I am implementing a few feature flags and other capabilities per the LD capabili
 ## Feature flags (LaunchDarkly)
 
 - **MAM_ABOUT** (boolean): When enabled, an “About” link appears and the About page is accessible. That page shows the application name, system details (Python version, OS, memory, CPU), the author name, and the libraries used.
-- **MAM_BG_COLOR**: Sets the default background color for the app. The default is `white`; the value should be a standard HTML color name (e.g. `white`, `lightgray`, `lightblue`).
+- **MAM_BG_COLOR**: Sets the background color of the **top banner** (welcome, Logout, About when shown, case toggle when shown). The main navigation area stays **white**. Default is `white`; use standard HTML color names (e.g. `lightgray`, `lightblue`).
 - **MAM_TOGGLE_CASE** (boolean): When enabled, a button appears on navigation pages to toggle compass link labels between lower and upper case (for experiments).
 
 The LaunchDarkly SDK key is read from the environment variable **`LAUNCHDARKLY_SDK_KEY`**.

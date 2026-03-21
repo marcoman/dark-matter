@@ -1,11 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Upper Left - Dark Matter{% endblock %}
 {% block body %}
-<div class="header">
-    <span class="user">Hello, {{ name }}</span>
-    <a href="{{ url_for('logout') }}" class="btn btn-ghost">Logout</a>
-</div>
-{% if name and show_about %}<p class="nav-about"><a href="{{ url_for('about') }}">About</a></p>{% endif %}
 {% if from_page %}<p class="from-page">You came from: {{ from_page }}</p>{% endif %}
 <div class="card">
     <h2>Upper Left</h2>
