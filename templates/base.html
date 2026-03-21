@@ -79,8 +79,96 @@
         .app {
             max-width: 56rem;
             margin: 0 auto;
-            padding: 2rem 1.5rem;
+            padding: 1.25rem 1.5rem 2rem;
             background: #ffffff;
+        }
+        /* Navigation main area: light/dark theme (banner above is unchanged) */
+        .nav-section {
+            position: relative;
+            padding: 2.75rem 1.25rem 1.75rem;
+            border-radius: var(--radius);
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .nav-section--light {
+            --nav-text: #0f172a;
+            --nav-text-muted: #64748b;
+            --nav-border: #e2e8f0;
+            --nav-card-bg: #ffffff;
+            --nav-muted-bg: rgba(15, 23, 42, 0.06);
+            background: #f1f5f9;
+            color: var(--nav-text);
+        }
+        .nav-section--dark {
+            --nav-text: #f1f5f9;
+            --nav-text-muted: #94a3b8;
+            --nav-border: rgba(148, 163, 184, 0.35);
+            --nav-card-bg: #1e293b;
+            --nav-muted-bg: rgba(0, 0, 0, 0.28);
+            background: #0f172a;
+            color: var(--nav-text);
+        }
+        .nav-section .card {
+            background: var(--nav-card-bg);
+            border-color: var(--nav-border);
+            color: var(--nav-text);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+        .nav-section--dark .card {
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+        }
+        .nav-section .from-page {
+            color: var(--nav-text-muted);
+        }
+        .nav-section h1,
+        .nav-section h2 {
+            color: var(--nav-text);
+        }
+        .nav-section .about-info {
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            background: var(--nav-muted-bg);
+            border: 1px solid var(--nav-border);
+        }
+        .nav-section .compass-wrap {
+            border-top-color: var(--nav-border);
+        }
+        .nav-section .compass .center,
+        .nav-section .compass .disabled {
+            color: var(--nav-text-muted);
+        }
+        /* Toggle: fixed styling so it stays readable on both light and dark nav backgrounds */
+        .nav-theme-toggle {
+            position: absolute;
+            top: 0.35rem;
+            right: 0.35rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.45rem 0.85rem;
+            font-family: inherit;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            line-height: 1.2;
+            color: #ffffff;
+            background: #312e81;
+            border: 2px solid rgba(255, 255, 255, 0.95);
+            border-radius: 999px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+            transition: background 0.15s ease, transform 0.05s ease;
+        }
+        .nav-theme-toggle:hover {
+            background: #4338ca;
+            color: #ffffff;
+        }
+        .nav-theme-toggle:focus-visible {
+            outline: 2px solid #fbbf24;
+            outline-offset: 3px;
+        }
+        .nav-theme-toggle__icon {
+            font-size: 1rem;
+            line-height: 1;
         }
         .btn {
             display: inline-block;
@@ -182,7 +270,91 @@
     </header>
     {% endif %}
     <div class="app">
-        {% block body %}{% endblock %}
+        <div class="nav-section nav-section--light" id="nav-section"
+             data-mam-dark-mode="{{ 'true' if show_dark_mode_toggle|default(false) else 'false' }}"
+             data-report-url="{{ url_for('api_ui_color_mode') }}">
+            {% if show_dark_mode_toggle|default(false) %}
+            <button type="button" class="nav-theme-toggle" id="nav-theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">
+                <span class="nav-theme-toggle__icon" aria-hidden="true">🌙</span>
+                <span class="nav-theme-toggle__label">Dark mode</span>
+            </button>
+            {% endif %}
+            <div class="nav-section__inner">
+                {% block body %}{% endblock %}
+            </div>
+        </div>
     </div>
+    <script>
+    (function () {
+        var STORAGE_KEY = 'dark-matter-nav-theme';
+        var REPORT_SS_KEY = 'ld_ui_color_mode_last_sent';
+        var shell = document.getElementById('nav-section');
+        if (!shell) return;
+        var darkFlagOn = shell.getAttribute('data-mam-dark-mode') === 'true';
+        var reportUrl = shell.getAttribute('data-report-url') || '';
+        var btn = document.getElementById('nav-theme-toggle');
+        var labelEl = btn ? btn.querySelector('.nav-theme-toggle__label') : null;
+        var iconEl = btn ? btn.querySelector('.nav-theme-toggle__icon') : null;
+
+        function applyVisual(theme) {
+            var isDark = theme === 'dark';
+            shell.classList.remove('nav-section--light', 'nav-section--dark');
+            shell.classList.add(isDark ? 'nav-section--dark' : 'nav-section--light');
+            if (btn) {
+                btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+                if (isDark) {
+                    btn.setAttribute('aria-label', 'Switch to light mode');
+                    if (labelEl) labelEl.textContent = 'Light mode';
+                    if (iconEl) iconEl.textContent = '☀️';
+                } else {
+                    btn.setAttribute('aria-label', 'Switch to dark mode');
+                    if (labelEl) labelEl.textContent = 'Dark mode';
+                    if (iconEl) iconEl.textContent = '🌙';
+                }
+            }
+        }
+
+        function persistTheme(theme) {
+            try { localStorage.setItem(STORAGE_KEY, theme); } catch (e) {}
+        }
+
+        function reportMode(mode) {
+            if (!darkFlagOn || !reportUrl) return;
+            try {
+                var last = sessionStorage.getItem(REPORT_SS_KEY);
+                if (last === mode) return;
+                sessionStorage.setItem(REPORT_SS_KEY, mode);
+            } catch (e) {}
+            fetch(reportUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ mode: mode })
+            }).catch(function () {});
+        }
+
+        if (!darkFlagOn) {
+            applyVisual('light');
+            return;
+        }
+
+        var stored = null;
+        try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+        var theme = stored === 'dark' ? 'dark' : 'light';
+        applyVisual(theme);
+        persistTheme(theme);
+        reportMode(theme);
+
+        if (btn) {
+            btn.addEventListener('click', function () {
+                var next = shell.classList.contains('nav-section--dark') ? 'light' : 'dark';
+                applyVisual(next);
+                persistTheme(next);
+                try { sessionStorage.removeItem(REPORT_SS_KEY); } catch (e) {}
+                reportMode(next);
+            });
+        }
+    })();
+    </script>
 </body>
 </html>

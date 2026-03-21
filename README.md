@@ -18,6 +18,7 @@ I am implementing a few feature flags and other capabilities per the LD capabili
 - **Lower Left** → Right: Lower Right; Up: Upper Left  
 - **Lower Right** → Up: Upper Right; Left: Lower Left  
 - Every page shows your name, a logout button, and “from where you came from.”
+- **Navigation area** (below the banner): **light / dark mode** toggle (upper right) only when LaunchDarkly flag **`MAM_DARK_MODE`** is on. Choice is stored in `localStorage`. With the flag off, the UI stays **light** and the toggle is hidden. The banner is not affected.
 - **Logout** clears the session and returns you to the login page.
 
 ## Feature flags (LaunchDarkly)
@@ -25,6 +26,7 @@ I am implementing a few feature flags and other capabilities per the LD capabili
 - **MAM_ABOUT** (boolean): When enabled, an “About” link appears and the About page is accessible. That page shows the application name, system details (Python version, OS, memory, CPU), the author name, and the libraries used.
 - **MAM_BG_COLOR**: Sets the background color of the **top banner** (welcome, Logout, About when shown, case toggle when shown). The main navigation area stays **white**. Default is `white`; use standard HTML color names (e.g. `lightgray`, `lightblue`).
 - **MAM_TOGGLE_CASE** (boolean): When enabled, a button appears on navigation pages to toggle compass link labels between lower and upper case (for experiments).
+- **MAM_DARK_MODE** (boolean, default **off**): When enabled, the nav-area **light/dark** toggle is shown; when off, the nav area stays light and the toggle is hidden.
 
 The LaunchDarkly SDK key is read from the environment variable **`LAUNCHDARKLY_SDK_KEY`**.
 
@@ -48,6 +50,10 @@ Case preference is **not** attached to compass clicks anymore. Use the toggle ev
 | `nav_case_toggle_clicked` | User clicked **switch->CASE** / **SWITCH->case** (only when `MAM_TOGGLE_CASE` is enabled) |
 
 `nav_case_toggle_clicked` includes `data`: `previous_case`, `new_case` (`lower` or `upper`), and `from_page`.
+
+| Event key | When it fires |
+|-----------|----------------|
+| `ui_color_mode` | Reports effective nav color mode: `data.mode` is **`light`** or **`dark`**. If **`MAM_DARK_MODE`** is off, the server sends **`light`** once per login session. If **`MAM_DARK_MODE`** is on, the browser POSTs to `/api/ui-color-mode` when the page loads (current preference) and when the user toggles (deduped per tab session for unchanged mode). |
 
 **Event filters in LaunchDarkly:** reference custom data fields on the event (e.g. `new_case`, `from_page`) depending on your UI; naming often matches the keys sent in `track(..., data={...})`.
 

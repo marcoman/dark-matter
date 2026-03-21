@@ -7,7 +7,7 @@ import platform
 import sys
 
 import psutil
-from flask import Flask, redirect, render_template, request, session, url_for
+from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 from ldclient import Context, LDClient
 from ldclient.config import Config
 
@@ -66,7 +66,12 @@ def get_ld_context(user_name: str) -> Context | None:
 
 
 def get_feature_flags(user_name: str) -> dict:
-    flags = {"MAM_ABOUT": False, "MAM_BG_COLOR": "white", "MAM_TOGGLE_CASE": False}
+    flags = {
+        "MAM_ABOUT": False,
+        "MAM_BG_COLOR": "white",
+        "MAM_TOGGLE_CASE": False,
+        "MAM_DARK_MODE": False,
+    }
     client = get_ld_client()
     if not client or not client.is_initialized():
         return flags
@@ -93,9 +98,36 @@ def get_feature_flags(user_name: str) -> dict:
         flags["MAM_ABOUT"] = client.variation("MAM_ABOUT", ctx, False)
         flags["MAM_BG_COLOR"] = client.variation("MAM_BG_COLOR", ctx, "white") or "white"
         flags["MAM_TOGGLE_CASE"] = client.variation("MAM_TOGGLE_CASE", ctx, False)
+        flags["MAM_DARK_MODE"] = client.variation("MAM_DARK_MODE", ctx, False)
     except Exception:
         pass
     return flags
+
+
+def track_ui_color_mode(user_name: str, mode: str) -> None:
+    """LaunchDarkly custom event for nav area color mode (metric key: ui_color_mode)."""
+    if mode not in ("light", "dark"):
+        return
+    client = get_ld_client()
+    if not client or not client.is_initialized():
+        return
+    ctx = get_ld_context(user_name)
+    if not ctx:
+        return
+    try:
+        client.track("ui_color_mode", ctx, data={"mode": mode})
+    except Exception:
+        pass
+
+
+def report_ui_color_mode_when_flag_off(user_name: str, flags: dict) -> None:
+    """When MAM_DARK_MODE is off, effective mode is always light; report once per login session."""
+    if flags.get("MAM_DARK_MODE"):
+        return
+    if session.get("_ld_ui_color_mode_metric_sent"):
+        return
+    track_ui_color_mode(user_name, "light")
+    session["_ld_ui_color_mode_metric_sent"] = True
 
 
 def track_nav_click(user_name: str, direction: str, from_slug: str, to_slug: str) -> None:
@@ -163,6 +195,7 @@ def login():
         session["name"] = name
         session["from_page"] = None
         session["nav_case"] = "lower"
+        session.pop("_ld_ui_color_mode_metric_sent", None)
         return redirect(url_for("upper_left"))
     if session.get("name"):
         return redirect(url_for("upper_left"))
@@ -188,6 +221,21 @@ def toggle_nav_case():
     if next_page:
         return redirect(next_page)
     return redirect(url_for("upper_left"))
+
+
+@app.route("/api/ui-color-mode", methods=["POST"])
+@require_login
+def api_ui_color_mode():
+    """Browser reports light/dark when MAM_DARK_MODE is enabled (custom metric ui_color_mode)."""
+    flags = get_feature_flags(session["name"])
+    if not flags.get("MAM_DARK_MODE"):
+        return jsonify({"ok": True, "ignored": True})
+    payload = request.get_json(silent=True) or {}
+    mode = (payload.get("mode") or "").lower()
+    if mode not in ("light", "dark"):
+        return jsonify({"error": "mode must be light or dark"}), 400
+    track_ui_color_mode(session["name"], mode)
+    return jsonify({"ok": True})
 
 
 @app.route("/nav/go/<direction>")
@@ -217,6 +265,7 @@ def upper_left():
     from_page = session.get("from_page")
     session["from_page"] = "upper-left"
     flags = get_feature_flags(session["name"])
+    report_ui_color_mode_when_flag_off(session["name"], flags)
     return render_template(
         "upper_left.html",
         name=session["name"],
@@ -224,6 +273,7 @@ def upper_left():
         show_about=flags["MAM_ABOUT"],
         bg_color=flags["MAM_BG_COLOR"],
         show_toggle_case=flags["MAM_TOGGLE_CASE"],
+        show_dark_mode_toggle=flags["MAM_DARK_MODE"],
         nav_case_upper=session.get("nav_case", "lower") == "upper",
     )
 
@@ -234,6 +284,7 @@ def upper_right():
     from_page = session.get("from_page")
     session["from_page"] = "upper-right"
     flags = get_feature_flags(session["name"])
+    report_ui_color_mode_when_flag_off(session["name"], flags)
     return render_template(
         "upper_right.html",
         name=session["name"],
@@ -241,6 +292,7 @@ def upper_right():
         show_about=flags["MAM_ABOUT"],
         bg_color=flags["MAM_BG_COLOR"],
         show_toggle_case=flags["MAM_TOGGLE_CASE"],
+        show_dark_mode_toggle=flags["MAM_DARK_MODE"],
         nav_case_upper=session.get("nav_case", "lower") == "upper",
     )
 
@@ -251,6 +303,7 @@ def lower_left():
     from_page = session.get("from_page")
     session["from_page"] = "lower-left"
     flags = get_feature_flags(session["name"])
+    report_ui_color_mode_when_flag_off(session["name"], flags)
     return render_template(
         "lower_left.html",
         name=session["name"],
@@ -258,6 +311,7 @@ def lower_left():
         show_about=flags["MAM_ABOUT"],
         bg_color=flags["MAM_BG_COLOR"],
         show_toggle_case=flags["MAM_TOGGLE_CASE"],
+        show_dark_mode_toggle=flags["MAM_DARK_MODE"],
         nav_case_upper=session.get("nav_case", "lower") == "upper",
     )
 
@@ -268,6 +322,7 @@ def lower_right():
     from_page = session.get("from_page")
     session["from_page"] = "lower-right"
     flags = get_feature_flags(session["name"])
+    report_ui_color_mode_when_flag_off(session["name"], flags)
     return render_template(
         "lower_right.html",
         name=session["name"],
@@ -275,6 +330,7 @@ def lower_right():
         show_about=flags["MAM_ABOUT"],
         bg_color=flags["MAM_BG_COLOR"],
         show_toggle_case=flags["MAM_TOGGLE_CASE"],
+        show_dark_mode_toggle=flags["MAM_DARK_MODE"],
         nav_case_upper=session.get("nav_case", "lower") == "upper",
     )
 
@@ -296,6 +352,7 @@ def about():
         "cpu_count": psutil.cpu_count(),
     }
     libraries = ["flask", "launchdarkly-server-sdk", "psutil"]
+    report_ui_color_mode_when_flag_off(session["name"], flags)
     return render_template(
         "about.html",
         name=session["name"],
@@ -305,6 +362,7 @@ def about():
         bg_color=flags["MAM_BG_COLOR"],
         show_about=True,
         show_toggle_case=flags["MAM_TOGGLE_CASE"],
+        show_dark_mode_toggle=flags["MAM_DARK_MODE"],
         nav_case_upper=session.get("nav_case", "lower") == "upper",
     )
 
