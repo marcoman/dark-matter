@@ -1,13 +1,13 @@
 # Dark Matter
 
-Welcome to my humble project.  This is a simple Flask application with multi-page navigation and LaunchDarkly feature flags. 
+Welcome to my humble project.  This is a small Python Flask application with multi-page navigation that utilizes LaunchDarkly capabilities. 
 
-You log in with your name only (no password), then move between four pages (upper-left, upper-right, lower-left, lower-right) using "Right", "Left", "Up", and "Down" links. 
+The application promnpts you for a name-only log in (no password), and your primary options are to navitate between four pages in a box formation (upper-left, upper-right, lower-left, lower-right) using "Right", "Left", "Up", and "Down" buttons. 
 
-I am implementing a few feature flags and other capabilities per the LD capabilities.  For example: 
-- Feature flags control whether an "About" page is visible 
-- The top banner background color (main page area stays white).
-- Others TBD
+Along the way, I added a few extra pages and links to help illustrate some LD capabilities. For example: 
+- Feature flags control whether an "About" page is visible.
+- The top banner background change based on the user by using targeted feature flags.
+- A dark mode toggle is available as part of an experiment, also governed by feature flags. I collect metrics as part of this experiment.
 
 ## What this application does
 
@@ -23,10 +23,12 @@ I am implementing a few feature flags and other capabilities per the LD capabili
 
 ## Feature flags (LaunchDarkly)
 
+These are the feature flags by name that I use in this example:
+
 - **MAM_ABOUT** (boolean): When enabled, an “About” link appears and the About page is accessible. That page shows the application name, system details (Python version, OS, memory, CPU), the author name, and the libraries used.
-- **MAM_BG_COLOR**: Sets the background color of the **top banner** (welcome, Logout, About when shown, case toggle when shown). The main navigation area stays **white**. Default is `white`; use standard HTML color names (e.g. `lightgray`, `lightblue`).
-- **MAM_TOGGLE_CASE** (boolean): When enabled, a button appears on navigation pages to toggle compass link labels between lower and upper case (for experiments).
-- **MAM_DARK_MODE** (boolean, default **off**): When enabled, the nav-area **light/dark** toggle is shown; when off, the nav area stays light and the toggle is hidden.
+- **MAM_BG_COLOR**: Sets the background color of the **top banner** (welcome, Logout, About when shown, case toggle when shown). The main navigation area stays **white**. Default is `white`; use standard HTML color names (e.g. `lightgray`, `lightblue`).  This page has several options, for when the feature is false, a default color for when it is true, and different colors depending on the username.
+- **MAM_TOGGLE_CASE** (boolean): When enabled, a button appears on navigation pages to toggle compass link labels between lower and upper case (for experiments).  This button is designed to test the collection of LD metrics.
+- **MAM_DARK_MODE** (boolean, default **off**): When enabled, the nav-area **light/dark** toggle is shown; when off, the nav area stays light and the toggle is hidden.  Ths toggle is designed ot test experimentation to find out, "Do people prefer dark or light mode?"
 
 The LaunchDarkly SDK key is read from the environment variable **`LAUNCHDARKLY_SDK_KEY`**.
 
@@ -65,11 +67,12 @@ In LaunchDarkly, create **custom metrics** that count these event keys (e.g. one
 I developed this code on a Win11 machine with WSL enabled.
 The primary OS is Ubuntu 24.
 Python verison 3.12.3
-Virtual env.
+I use Python Virtual environments, as noted below.
+I developed with Cursor.  This is my first major usage of that IDE for a multi-session test.  Previously, I used cursor for simple projects, typically 15-20 minutes.
 
 ## Prompt used to create this application
 
-This is not the only prompt, but rather the first one that got things started.
+This was the first prompt, but not the only prompt.
 
 > Let's create a python application named "dark-matter"
 >
@@ -94,6 +97,11 @@ This is not the only prompt, but rather the first one that got things started.
 > - Another feature flag changes the default background color. The default is "white" and the options are standard HTML values by name. This flag is named MAM_BG_COLOR.
 > The Launchdarkly API token is named LAUNCHCDARKLY_SDK_KEY.
 
+Since the initial prompt, I added more to separate the top and bottom into a banner + body section.
+To better support contrast, I modified the banner to enclose text in persistent backgrounds.
+I added a toggle for dark/light mode.  To support this, I asked to change the color scheme to better support the different contrast requirements.
+Along the way, I made changes to navigation, words, the about page, and more and this resulted in shifting logic from the python application to the *.html pages, to a reusable banner section, to updates in  the .css files to better support text switches.  I reviewed about 90% of the code changes suggested to me...eerily spot-on.
+
 ---
 
 ## How to build and run
@@ -108,8 +116,8 @@ This is not the only prompt, but rather the first one that got things started.
 
 I use these envvars to direct my application.  Of course, I don't have my secrets here, but I do state how big each field is.
 
-- export LAUNCHDARKLY_SDK_KEY=sdk-8chars-4chars-4chars-4chars-12chars
-- export LAUNCHDARKLY_API_KEY=api-8chars-4chars-4chars-4chars-12chars
+`export LAUNCHDARKLY_SDK_KEY=sdk-8chars-4chars-4chars-4chars-12chars`
+`export LAUNCHDARKLY_API_KEY=api-8chars-4chars-4chars-4chars-12chars`
 
 
 ### Run from the command line (Python 3)
@@ -125,9 +133,10 @@ I use these envvars to direct my application.  Of course, I don't have my secret
    pip install -r requirements.txt
    ```
 
-3. Set the LaunchDarkly SDK key (optional; if unset, flags default to off/white):
+3. Set the LaunchDarkly envvars (optional; if unset, flags default to off/white):
    ```bash
-   export LAUNCHDARKLY_SDK_KEY=sdk-xxxx-your-key
+   export LAUNCHDARKLY_SDK_KEY=sdk-8chars-4chars-4chars-4chars-12chars
+   export LAUNCHDARKLY_API_KEY=api-8chars-4chars-4chars-4chars-12chars
    ```
 I happen to have this envvar set up in my ~/.bashrc.
 
@@ -137,14 +146,14 @@ I happen to have this envvar set up in my ~/.bashrc.
    ```
    The app listens on `http://127.0.0.1:5000`. Open that URL in your browser.
 
-5. Optional: set a secret key for production and/or port:
+5. Optional: set a secret key for production and/or port (not tested in this configuration)
    ```bash
    export SECRET_KEY=your-secret-key
    export PORT=8080
    python app.py
    ```
 
-### Build and run with Docker
+### Build and run with Docker (not tested...yet)
 
 1. Build the image (multi-stage build):
    ```bash
@@ -167,7 +176,7 @@ I happen to have this envvar set up in my ~/.bashrc.
 | Docker        | `docker build -t dark-matter .` then `docker run -p 5000:5000 -e LAUNCHDARKLY_SDK_KEY=... dark-matter` |
 
 
-## Next Steps
+## Ideas, musings, next steps
 
 These are notes to self, and some are aspirational.
 
@@ -196,10 +205,23 @@ Per the ingredients, and when time permits, I'd like or need to do the following
    - I'll likely deploy to ECS
    - Deploy 2 instances, and see about targeting one instance with FF.  This will require me to better understand how to use LD.
 
-## Notes
-
+## Observations, issues, bugs
 - I  tested some CURL commands, the REST API docs look to be small.
 - I am testing the CLI
    - https://github.com/launchdarkly/ldcli
    - Of course, I prefer the straight CLI over the npm cli
+- I noticed that rapid navigation clicking may send you to the login page...may need investigation.
+
+# Images
+
+This is a screenshot of the metrics page, showing activity for several mtrics.
+![metrics screenshot](./images/metrics.png)
+
+
+This is the screenshot of the FF page, showing the list of FFs in this project, plus one that is unused.
+![Feature Flags screenshot](./images/ld_ff.png)
+
+
+This screenshot shows the details for a single feature flag - MAM_BG_COLOR.  The details highlight the default values for different targets.
+![Feature Flags screenshot](./images/ld_ff_bg_color.png)
 
