@@ -1,6 +1,6 @@
 """
 Dark Matter - A simple Flask application with feature-flagged navigation.
-Uses LaunchDarkly for MAM_ABOUT (about page) and MAM_BG_COLOR (background).
+Uses LaunchDarkly for feature flags (about, banner color, inline about, etc.).
 """
 import os
 import platform
@@ -13,6 +13,31 @@ from ldclient.config import Config
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dark-matter-dev-secret-change-in-production")
+
+_AUTHOR = "Marco"
+_LIBRARIES = ["flask", "launchdarkly-server-sdk", "psutil"]
+
+
+def _build_sys_info() -> dict:
+    return {
+        "python_version": sys.version,
+        "os": platform.system(),
+        "os_release": platform.release(),
+        "machine": platform.machine(),
+        "processor": platform.processor() or "N/A",
+        "memory_total_gb": round(psutil.virtual_memory().total / (1024**3), 2),
+        "memory_available_gb": round(psutil.virtual_memory().available / (1024**3), 2),
+        "cpu_count": psutil.cpu_count(),
+    }
+
+
+def get_about_inline_context() -> dict:
+    """Shared About content for /about and inline block on nav pages."""
+    return {
+        "sys_info": _build_sys_info(),
+        "libraries": _LIBRARIES,
+        "author": _AUTHOR,
+    }
 
 # LaunchDarkly client (lazy init)
 _ld_client = None
@@ -71,6 +96,7 @@ def get_feature_flags(user_name: str) -> dict:
         "MAM_BG_COLOR": "white",
         "MAM_TOGGLE_CASE": False,
         "MAM_DARK_MODE": False,
+        "MAM_INLINE_ABOUT": False,
     }
     client = get_ld_client()
     if not client or not client.is_initialized():
@@ -99,9 +125,29 @@ def get_feature_flags(user_name: str) -> dict:
         flags["MAM_BG_COLOR"] = client.variation("MAM_BG_COLOR", ctx, "white") or "white"
         flags["MAM_TOGGLE_CASE"] = client.variation("MAM_TOGGLE_CASE", ctx, False)
         flags["MAM_DARK_MODE"] = client.variation("MAM_DARK_MODE", ctx, False)
+        flags["MAM_INLINE_ABOUT"] = client.variation("MAM_INLINE_ABOUT", ctx, False)
     except Exception:
         pass
     return flags
+
+
+def track_inline_about_load(user_name: str, load_ms: float, mam_inline_about: bool) -> None:
+    """Custom metric `inline_about`: page load time (ms) with flag on/off for experiments."""
+    client = get_ld_client()
+    if not client or not client.is_initialized():
+        return
+    ctx = get_ld_context(user_name)
+    if not ctx:
+        return
+    try:
+        client.track(
+            "inline_about",
+            ctx,
+            data={"mam_inline_about": mam_inline_about, "load_ms": round(load_ms, 2)},
+            metric_value=load_ms,
+        )
+    except Exception:
+        pass
 
 
 def track_ui_color_mode(user_name: str, mode: str) -> None:
@@ -238,6 +284,23 @@ def api_ui_color_mode():
     return jsonify({"ok": True})
 
 
+@app.route("/api/inline-about-load", methods=["POST"])
+@require_login
+def api_inline_about_load():
+    """Browser-reported navigation timing for `inline_about` metric (compare with/without MAM_INLINE_ABOUT)."""
+    flags = get_feature_flags(session["name"])
+    payload = request.get_json(silent=True) or {}
+    raw = payload.get("load_ms")
+    try:
+        load_ms = float(raw)
+    except (TypeError, ValueError):
+        return jsonify({"error": "invalid load_ms"}), 400
+    if load_ms < 0 or load_ms > 600000:
+        return jsonify({"error": "load_ms out of range"}), 400
+    track_inline_about_load(session["name"], load_ms, bool(flags.get("MAM_INLINE_ABOUT")))
+    return jsonify({"ok": True})
+
+
 @app.route("/nav/go/<direction>")
 @require_login
 def nav_go(direction: str):
@@ -266,6 +329,9 @@ def upper_left():
     session["from_page"] = "upper-left"
     flags = get_feature_flags(session["name"])
     report_ui_color_mode_when_flag_off(session["name"], flags)
+    extras = {"show_inline_about": flags["MAM_INLINE_ABOUT"]}
+    if flags["MAM_INLINE_ABOUT"]:
+        extras.update(get_about_inline_context())
     return render_template(
         "upper_left.html",
         name=session["name"],
@@ -275,6 +341,7 @@ def upper_left():
         show_toggle_case=flags["MAM_TOGGLE_CASE"],
         show_dark_mode_toggle=flags["MAM_DARK_MODE"],
         nav_case_upper=session.get("nav_case", "lower") == "upper",
+        **extras,
     )
 
 
@@ -285,6 +352,9 @@ def upper_right():
     session["from_page"] = "upper-right"
     flags = get_feature_flags(session["name"])
     report_ui_color_mode_when_flag_off(session["name"], flags)
+    ctx = {"show_inline_about": flags["MAM_INLINE_ABOUT"]}
+    if flags["MAM_INLINE_ABOUT"]:
+        ctx.update(get_about_inline_context())
     return render_template(
         "upper_right.html",
         name=session["name"],
@@ -294,6 +364,7 @@ def upper_right():
         show_toggle_case=flags["MAM_TOGGLE_CASE"],
         show_dark_mode_toggle=flags["MAM_DARK_MODE"],
         nav_case_upper=session.get("nav_case", "lower") == "upper",
+        **ctx,
     )
 
 
@@ -304,6 +375,9 @@ def lower_left():
     session["from_page"] = "lower-left"
     flags = get_feature_flags(session["name"])
     report_ui_color_mode_when_flag_off(session["name"], flags)
+    ctx = {"show_inline_about": flags["MAM_INLINE_ABOUT"]}
+    if flags["MAM_INLINE_ABOUT"]:
+        ctx.update(get_about_inline_context())
     return render_template(
         "lower_left.html",
         name=session["name"],
@@ -313,6 +387,7 @@ def lower_left():
         show_toggle_case=flags["MAM_TOGGLE_CASE"],
         show_dark_mode_toggle=flags["MAM_DARK_MODE"],
         nav_case_upper=session.get("nav_case", "lower") == "upper",
+        **ctx,
     )
 
 
@@ -323,6 +398,9 @@ def lower_right():
     session["from_page"] = "lower-right"
     flags = get_feature_flags(session["name"])
     report_ui_color_mode_when_flag_off(session["name"], flags)
+    ctx = {"show_inline_about": flags["MAM_INLINE_ABOUT"]}
+    if flags["MAM_INLINE_ABOUT"]:
+        ctx.update(get_about_inline_context())
     return render_template(
         "lower_right.html",
         name=session["name"],
@@ -332,6 +410,7 @@ def lower_right():
         show_toggle_case=flags["MAM_TOGGLE_CASE"],
         show_dark_mode_toggle=flags["MAM_DARK_MODE"],
         nav_case_upper=session.get("nav_case", "lower") == "upper",
+        **ctx,
     )
 
 
@@ -341,29 +420,19 @@ def about():
     flags = get_feature_flags(session["name"])
     if not flags["MAM_ABOUT"]:
         return redirect(url_for("upper_left"))
-    sys_info = {
-        "python_version": sys.version,
-        "os": platform.system(),
-        "os_release": platform.release(),
-        "machine": platform.machine(),
-        "processor": platform.processor() or "N/A",
-        "memory_total_gb": round(psutil.virtual_memory().total / (1024**3), 2),
-        "memory_available_gb": round(psutil.virtual_memory().available / (1024**3), 2),
-        "cpu_count": psutil.cpu_count(),
-    }
-    libraries = ["flask", "launchdarkly-server-sdk", "psutil"]
+    about_ctx = get_about_inline_context()
     report_ui_color_mode_when_flag_off(session["name"], flags)
     return render_template(
         "about.html",
         name=session["name"],
-        sys_info=sys_info,
-        libraries=libraries,
-        author="Marco",
         bg_color=flags["MAM_BG_COLOR"],
         show_about=True,
         show_toggle_case=flags["MAM_TOGGLE_CASE"],
         show_dark_mode_toggle=flags["MAM_DARK_MODE"],
+        show_inline_about=False,
+        record_inline_load_metric=False,
         nav_case_upper=session.get("nav_case", "lower") == "upper",
+        **about_ctx,
     )
 
 

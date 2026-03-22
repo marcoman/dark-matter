@@ -29,6 +29,7 @@ These are the feature flags by name that I use in this example:
 - **MAM_BG_COLOR**: Sets the background color of the **top banner** (welcome, Logout, About when shown, case toggle when shown). The main navigation area stays **white**. Default is `white`; use standard HTML color names (e.g. `lightgray`, `lightblue`).  This page has several options, for when the feature is false, a default color for when it is true, and different colors depending on the username.
 - **MAM_TOGGLE_CASE** (boolean): When enabled, a button appears on navigation pages to toggle compass link labels between lower and upper case (for experiments).  This button is designed to test the collection of LD metrics.
 - **MAM_DARK_MODE** (boolean, default **off**): When enabled, the nav-area **light/dark** toggle is shown; when off, the nav area stays light and the toggle is hidden.  Ths toggle is designed ot test experimentation to find out, "Do people prefer dark or light mode?"
+- **MAM_INLINE_ABOUT** (boolean, default **off**): When enabled, the same **About** content shown on `/about` is rendered **below** the compass on the four navigation corner pages. When off, those pages look as before (no inline block).
 
 The LaunchDarkly SDK key is read from the environment variable **`LAUNCHDARKLY_SDK_KEY`**.
 
@@ -56,6 +57,10 @@ Case preference is **not** attached to compass clicks anymore. Use the toggle ev
 | Event key | When it fires |
 |-----------|----------------|
 | `ui_color_mode` | Reports effective nav color mode: `data.mode` is **`light`** or **`dark`**. If **`MAM_DARK_MODE`** is off, the server sends **`light`** once per login session. If **`MAM_DARK_MODE`** is on, the browser POSTs to `/api/ui-color-mode` when the page loads (current preference) and when the user toggles (deduped per tab session for unchanged mode). |
+
+| Event key | When it fires |
+|-----------|----------------|
+| `inline_about` | **Navigation corner pages only** (not `/about`). After **load**, the browser POSTs **`load_ms`** to `/api/inline-about-load`. The server emits **`inline_about`** with `metric_value` = load time in ms, and `data`: `mam_inline_about` (whether **`MAM_INLINE_ABOUT`** was on for that load), `load_ms`. Use a **numeric** custom metric in LD on this event to compare load times with vs without the flag. |
 
 **Event filters in LaunchDarkly:** reference custom data fields on the event (e.g. `new_case`, `from_page`) depending on your UI; naming often matches the keys sent in `track(..., data={...})`.
 

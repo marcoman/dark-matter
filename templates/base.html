@@ -241,6 +241,12 @@
             font-weight: 500;
             padding: 0.5rem 1rem;
         }
+        .nav-section .inline-about {
+            margin-top: 1.5rem;
+        }
+        .nav-section .inline-about h1 {
+            font-size: 1.5rem;
+        }
     </style>
     {% block head %}{% endblock %}
 </head>
@@ -272,7 +278,8 @@
     <div class="app">
         <div class="nav-section nav-section--light" id="nav-section"
              data-mam-dark-mode="{{ 'true' if show_dark_mode_toggle|default(false) else 'false' }}"
-             data-report-url="{{ url_for('api_ui_color_mode') }}">
+             data-report-url="{{ url_for('api_ui_color_mode') }}"
+             data-inline-metric-url="{{ url_for('api_inline_about_load') }}">
             {% if show_dark_mode_toggle|default(false) %}
             <button type="button" class="nav-theme-toggle" id="nav-theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">
                 <span class="nav-theme-toggle__icon" aria-hidden="true">🌙</span>
@@ -282,6 +289,9 @@
             <div class="nav-section__inner">
                 {% block body %}{% endblock %}
             </div>
+            {% if show_inline_about|default(false) %}
+            {% include '_inline_about.html' %}
+            {% endif %}
         </div>
     </div>
     <script>
@@ -356,5 +366,37 @@
         }
     })();
     </script>
+    {% if name|default(false) and record_inline_load_metric|default(true) %}
+    <script>
+    (function () {
+        var shell = document.getElementById('nav-section');
+        if (!shell) return;
+        var url = shell.getAttribute('data-inline-metric-url');
+        if (!url) return;
+        function sendLoadMetric() {
+            var loadMs = null;
+            var list = performance.getEntriesByType && performance.getEntriesByType('navigation');
+            if (list && list.length && list[0].loadEventEnd > 0) {
+                loadMs = Math.round(list[0].loadEventEnd - list[0].startTime);
+            } else if (window.performance && performance.timing && performance.timing.loadEventEnd) {
+                var t = performance.timing;
+                loadMs = t.loadEventEnd - t.navigationStart;
+            }
+            if (loadMs == null || loadMs < 0 || loadMs > 600000) return;
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ load_ms: loadMs })
+            }).catch(function () {});
+        }
+        if (document.readyState === 'complete') {
+            sendLoadMetric();
+        } else {
+            window.addEventListener('load', sendLoadMetric);
+        }
+    })();
+    </script>
+    {% endif %}
 </body>
 </html>

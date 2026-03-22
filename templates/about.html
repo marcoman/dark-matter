@@ -2,24 +2,5 @@
 {% block title %}About - Dark Matter{% endblock %}
 {% block body %}
 <p class="from-page"><a href="{{ url_for('upper_left') }}">← Back to Upper Left</a></p>
-<div class="card">
-    <h1>About Dark Matter</h1>
-    <p>Dark Matter is a simple Flask application with feature-flagged navigation and an about page.</p>
-    <h2>System details</h2>
-    <div class="about-info">
-        <p style="margin: 0.25rem 0;"><strong>Python:</strong> {{ sys_info.python_version }}</p>
-        <p style="margin: 0.25rem 0;"><strong>OS:</strong> {{ sys_info.os }} {{ sys_info.os_release }}</p>
-        <p style="margin: 0.25rem 0;"><strong>Machine:</strong> {{ sys_info.machine }}</p>
-        <p style="margin: 0.25rem 0;"><strong>Processor:</strong> {{ sys_info.processor }}</p>
-        <p style="margin: 0.25rem 0;"><strong>Memory total:</strong> {{ sys_info.memory_total_gb }} GB</p>
-        <p style="margin: 0.25rem 0;"><strong>Memory available:</strong> {{ sys_info.memory_available_gb }} GB</p>
-        <p style="margin: 0.25rem 0;"><strong>CPU count:</strong> {{ sys_info.cpu_count }}</p>
-    </div>
-    <h2>Author</h2>
-    <p>{{ author }}</p>
-    <h2>Libraries used</h2>
-    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
-        {% for lib in libraries %}<li>{{ lib }}</li>{% endfor %}
-    </ul>
-</div>
+{% include '_inline_about.html' %}
 {% endblock %}
