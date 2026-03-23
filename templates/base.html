@@ -9,6 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
+            /* Set server-side so we avoid Jinja inside HTML style="" (breaks CSS diagnostics) */
+            --banner-bg: {{ bg_color|default('white') }};
             --surface: #ffffff;
             --text: #1a1a2e;
             --text-muted: #64748b;
@@ -33,6 +35,7 @@
         .banner {
             width: 100%;
             padding: 1rem 1.5rem 1.25rem;
+            background-color: var(--banner-bg);
             border-bottom: 1px solid rgba(0, 0, 0, 0.08);
             box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
         }
@@ -252,7 +255,7 @@
 </head>
 <body>
     {% if name %}
-    <header class="banner" style="background-color: {{ bg_color|default('white') }};">
+    <header class="banner">
         <div class="banner-inner">
             <div class="banner-screen banner-screen--grow">
                 <span class="user">Hello, {{ name }}</span>

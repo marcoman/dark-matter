@@ -140,6 +140,7 @@ def track_inline_about_load(user_name: str, load_ms: float, mam_inline_about: bo
     if not ctx:
         return
     try:
+        print(f"Tracking inline_about for {user_name} with load_ms: {load_ms} and mam_inline_about: {mam_inline_about}")
         client.track(
             "inline_about",
             ctx,

@@ -83,6 +83,28 @@ def measure_one_user(
         return start, end, load_us, 0
 
 
+def report_inline_about_load(
+    base_url: str,
+    session: requests.Session,
+    load_us: int,
+    timeout: float,
+) -> int:
+    """
+    POST measured load time to app API so server can emit LD `inline_about`.
+    Returns API status code (0 if request failed).
+    """
+    url = base_url.rstrip("/") + "/api/inline-about-load"
+    try:
+        r = session.post(
+            url,
+            json={"load_ms": load_us / 1000.0},  # API expects milliseconds
+            timeout=timeout,
+        )
+        return r.status_code
+    except requests.RequestException:
+        return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Evaluate first-page load per user and MAM_INLINE_ABOUT.")
     parser.add_argument(
@@ -140,6 +162,11 @@ def main() -> int:
                 start, end, load_us, status = measure_one_user(
                     args.base_url, username, sess, args.timeout
                 )
+                metric_status = 0
+                if status == 200:
+                    metric_status = report_inline_about_load(
+                        args.base_url, sess, load_us, args.timeout
+                    )
                 w.writerow(
                     [
                         username,
@@ -151,7 +178,10 @@ def main() -> int:
                 )
                 f.flush()
                 if i % 50 == 0 or i == 1:
-                    print(f"  ... {username} status={status} load_us={load_us} mam_inline_about={mam_inline}")
+                    print(
+                        f"  ... {username} status={status} metric_status={metric_status} "
+                        f"load_us={load_us} mam_inline_about={mam_inline}"
+                    )
     finally:
         client.close()
 

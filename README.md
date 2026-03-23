@@ -127,7 +127,8 @@ I use these envvars to direct my application.  Of course, I don't have my secret
 
 ### Script: inline page load + `MAM_INLINE_ABOUT` (CSV)
 
-With the Flask app running, this script logs in as `user1` … `user300`, measures time for the first page (login POST + redirect to the nav page), evaluates **`MAM_INLINE_ABOUT`** from LaunchDarkly with the same context as the app, and writes **`inline_time_YYYYMMDD_HHMMSS.csv`** in the project root (timestamp = test start).
+With the Flask app running, this script logs in as `user1` … `user300`, measures time for the first page (login POST + redirect to the nav page), evaluates **`MAM_INLINE_ABOUT`** from LaunchDarkly with the same context as the app, and writes **`inline_time_YYYYMMDD_HHMMSS.csv`** in the project root (timestamp = test start).  
+After each successful login/page load, it also POSTs to `/api/inline-about-load` so the server can emit the LaunchDarkly metric event `inline_about`.
 
 ```bash
 export LAUNCHDARKLY_SDK_KEY=...
