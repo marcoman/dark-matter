@@ -291,6 +291,7 @@ def api_inline_about_load():
     flags = get_feature_flags(session["name"])
     payload = request.get_json(silent=True) or {}
     raw = payload.get("load_ms")
+    print(f"load_ms: {raw}")
     try:
         load_ms = float(raw)
     except (TypeError, ValueError):

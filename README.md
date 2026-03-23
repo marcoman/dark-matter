@@ -125,6 +125,18 @@ I use these envvars to direct my application.  Of course, I don't have my secret
 `export LAUNCHDARKLY_API_KEY=api-8chars-4chars-4chars-4chars-12chars`
 
 
+### Script: inline page load + `MAM_INLINE_ABOUT` (CSV)
+
+With the Flask app running, this script logs in as `user1` … `user300`, measures time for the first page (login POST + redirect to the nav page), evaluates **`MAM_INLINE_ABOUT`** from LaunchDarkly with the same context as the app, and writes **`inline_time_YYYYMMDD_HHMMSS.csv`** in the project root (timestamp = test start).
+
+```bash
+export LAUNCHDARKLY_SDK_KEY=...
+export DARK_MATTER_BASE_URL=http://127.0.0.1:5000   # optional
+python scripts/evaluate_inline_page_load.py
+```
+
+Columns: `username`, `start_time`, `end_time`, `page_load_time_us`, `mam_inline_about` (`true` / `false`).
+
 ### Run from the command line (Python 3)
 
 1. Create a virtual environment (recommended):

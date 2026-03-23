@@ -1,3 +1,4 @@
 flask>=3.0
 launchdarkly-server-sdk>=9.0
 psutil>=5.9
+requests>=2.28
