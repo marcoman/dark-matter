@@ -1,6 +1,12 @@
 name: build-container
 
 on:
+  workflow_dispatch:
+    inputs:
+      description:
+        description: "Description of the build"
+        required: true
+        default: "Build the container"
   pull_request:
   push:
     branches: [main]
