@@ -1,6 +1,8 @@
 """
 Dark Matter - A simple Flask application with feature-flagged navigation.
 Uses LaunchDarkly for feature flags (about, banner color, inline about, etc.).
+Written by Marco, 2026.
+
 """
 import os
 import platform
