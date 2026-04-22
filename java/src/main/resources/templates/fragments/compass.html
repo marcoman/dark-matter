@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="compass" class="compass-wrap">
+    <p class="from-page" style="margin-bottom: 0.5rem;">Navigate</p>
+    <div class="compass">
+        <span th:class="${navUp} ? 'up' : 'up disabled'">
+            <a th:if="${navUp}" th:href="@{/nav/go/up}">
+                <span th:text="${navCaseUpper} ? 'UP' : 'up'">up</span>
+            </a>
+            <th:block th:unless="${navUp}">
+                <span th:text="${navCaseUpper} ? 'UP' : 'up'">up</span>
+            </th:block>
+        </span>
+        <span th:class="${navLeft} ? 'left' : 'left disabled'">
+            <a th:if="${navLeft}" th:href="@{/nav/go/left}">
+                <span th:text="${navCaseUpper} ? 'LEFT' : 'left'">left</span>
+            </a>
+            <th:block th:unless="${navLeft}">
+                <span th:text="${navCaseUpper} ? 'LEFT' : 'left'">left</span>
+            </th:block>
+        </span>
+        <span class="center">·</span>
+        <span th:class="${navRight} ? 'right' : 'right disabled'">
+            <a th:if="${navRight}" th:href="@{/nav/go/right}">
+                <span th:text="${navCaseUpper} ? 'RIGHT' : 'right'">right</span>
+            </a>
+            <th:block th:unless="${navRight}">
+                <span th:text="${navCaseUpper} ? 'RIGHT' : 'right'">right</span>
+            </th:block>
+        </span>
+        <span th:class="${navDown} ? 'down' : 'down disabled'">
+            <a th:if="${navDown}" th:href="@{/nav/go/down}">
+                <span th:text="${navCaseUpper} ? 'DOWN' : 'down'">down</span>
+            </a>
+            <th:block th:unless="${navDown}">
+                <span th:text="${navCaseUpper} ? 'DOWN' : 'down'">down</span>
+            </th:block>
+        </span>
+    </div>
+</div>
+</body>
+</html>

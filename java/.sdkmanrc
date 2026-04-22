@@ -1,0 +1,3 @@
+# Install: sdk install java 21.0.5-tem
+# Use in this directory: sdk env
+java=21.0.5-tem

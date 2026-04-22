@@ -1,3 +1,8 @@
+# Java / Maven
+java/target/
+java/.idea/
+java/*.iml
+
 # Python
 venv/
 .venv/

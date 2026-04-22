@@ -109,21 +109,83 @@ Along the way, I made changes to navigation, words, the about page, and more and
 
 ---
 
-## How to build and run
+## Prerequisites (Python)
 
-### Prerequisites
+- **Python 3.10+** (3.12 matches the Docker base image in `python/Dockerfile`).
+- **`pip`** and a virtual environment (**`venv`**) are recommended for local development.
+- Optional: **Docker** to build and run the container image.
+- Optional: a **LaunchDarkly** project and **SDK key** for live feature flags.
 
-- Python 3.10+ (or 3.12 for Docker)
-- Optional: Docker (for container run)
-- Optional: LaunchDarkly project and SDK key for feature flags
+## Configuration
 
-### Environment variables:
+Set environment variables in the shell (or your process manager / container). The app reads at least:
 
-I use these envvars to direct my application.  Of course, I don't have my secrets here, but I do state how big each field is.
+| Variable | Purpose |
+|----------|---------|
+| `LAUNCHDARKLY_SDK_KEY` | Server-side SDK key for LaunchDarkly. If unset, flags use defaults (off / `white` banner). |
+| `LAUNCHDARKLY_API_KEY` | Optional; not required by this sample app’s runtime (documented for your own tooling). |
+| `SECRET_KEY` | Flask session signing secret (defaults in code for dev only). |
+| `PORT` | Listen port (default **5000**). |
+| `FLASK_DEBUG` | Set to `1` to enable Flask debug mode. |
 
-`export LAUNCHDARKLY_SDK_KEY=sdk-8chars-4chars-4chars-4chars-12chars`
-`export LAUNCHDARKLY_API_KEY=api-8chars-4chars-4chars-4chars-12chars`
+Example (sizes illustrative only):
 
+```bash
+export LAUNCHDARKLY_SDK_KEY=sdk-8chars-4chars-4chars-4chars-12chars
+export LAUNCHDARKLY_API_KEY=api-8chars-4chars-4chars-4chars-12chars
+```
+
+## Build
+
+### Install dependencies (local)
+
+From the `python/` directory, create a venv and install packages into it:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate   # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+There is no separate compile step; `pip install` is the build for local runs.
+
+### Docker image
+
+From the **repository root**:
+
+```bash
+docker build -f python/Dockerfile -t dark-matter .
+```
+
+This uses the multi-stage `python/Dockerfile` and expects the build context to include the `python/` tree.
+
+## Run
+
+### Local (Flask)
+
+With your working directory **`python/`** and (recommended) venv activated:
+
+```bash
+python app.py
+```
+
+The app listens on `http://127.0.0.1:5000` unless `PORT` is set.
+
+Optional:
+
+```bash
+export SECRET_KEY=your-secret-key
+export PORT=8080
+python app.py
+```
+
+### Docker
+
+```bash
+docker run -p 5000:5000 -e LAUNCHDARKLY_SDK_KEY=sdk-xxxx-your-key dark-matter
+```
+
+Omit `-e LAUNCHDARKLY_SDK_KEY=...` to run with default flag behavior. Open `http://localhost:5000`.
 
 ### Script: inline page load + `MAM_INLINE_ABOUT` (CSV)
 
@@ -140,65 +202,13 @@ python scripts/evaluate_inline_page_load.py
 
 Columns: `username`, `start_time`, `end_time`, `page_load_time_us`, `mam_inline_about` (`true` / `false`).
 
-### Run from the command line (Python 3)
+### Quick reference
 
-These steps assume your shell’s working directory is **`python/`** (the folder that contains `app.py` and `requirements.txt`).
-
-1. Create a virtual environment (recommended):
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Set the LaunchDarkly envvars (optional; if unset, flags default to off/white):
-   ```bash
-   export LAUNCHDARKLY_SDK_KEY=sdk-8chars-4chars-4chars-4chars-12chars
-   export LAUNCHDARKLY_API_KEY=api-8chars-4chars-4chars-4chars-12chars
-   ```
-I happen to have this envvar set up in my ~/.bashrc.
-
-4. Run the app:
-   ```bash
-   python app.py
-   ```
-   The app listens on `http://127.0.0.1:5000`. Open that URL in your browser.
-
-5. Optional: set a secret key for production and/or port (not tested in this configuration)
-   ```bash
-   export SECRET_KEY=your-secret-key
-   export PORT=8080
-   python app.py
-   ```
-
-### Build and run with Docker (not tested...yet)
-
-From the **repository root** (parent of `python/`), build with the Dockerfile in `python/`:
-
-1. Build the image (multi-stage build):
-   ```bash
-   docker build -f python/Dockerfile -t dark-matter .
-   ```
-
-2. Run the container:
-   ```bash
-   docker run -p 5000:5000 -e LAUNCHDARKLY_SDK_KEY=sdk-xxxx-your-key dark-matter
-   ```
-   Omit `-e LAUNCHDARKLY_SDK_KEY=...` if you are not using LaunchDarkly; the app will still run with default flag behavior.
-
-3. Open `http://localhost:5000` in your browser.
-
-### Summary
-
-| Method        | Command / step                                              |
-|---------------|-------------------------------------------------------------|
-| Local Python  | From `python/`: `pip install -r requirements.txt` then `python app.py` |
-| Docker        | From repo root: `docker build -f python/Dockerfile -t dark-matter .` then `docker run -p 5000:5000 -e LAUNCHDARKLY_SDK_KEY=... dark-matter` |
-
+| Step | Command |
+|------|---------|
+| Install deps | From `python/`: `pip install -r requirements.txt` (preferably in a venv) |
+| Run | `python app.py` |
+| Docker | From repo root: `docker build -f python/Dockerfile -t dark-matter .` then `docker run -p 5000:5000 … dark-matter` |
 
 ## Ideas, musings, next steps
 

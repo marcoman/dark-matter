@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<body>
+<section layout:fragment="content">
+    <p class="from-page"><a th:href="@{/upper-left}">← Back to Upper Left</a></p>
+    <div th:replace="~{fragments/inline-about :: inline}"></div>
+</section>
+</body>
+</html>

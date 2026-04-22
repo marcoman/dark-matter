@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="inline" class="card inline-about">
+    <h1>About Dark Matter</h1>
+    <p>Dark Matter is a Spring Boot application with feature-flagged navigation and an about page.</p>
+    <h2>System details</h2>
+    <div class="about-info">
+        <p style="margin: 0.25rem 0;"><strong>Java:</strong> <span th:text="${sysInfo.javaVersion}">21</span></p>
+        <p style="margin: 0.25rem 0;"><strong>OS:</strong> <span th:text="${sysInfo.os + ' ' + sysInfo.osRelease}"></span></p>
+        <p style="margin: 0.25rem 0;"><strong>Machine:</strong> <span th:text="${sysInfo.machine}"></span></p>
+        <p style="margin: 0.25rem 0;"><strong>Processor:</strong> <span th:text="${sysInfo.processor}"></span></p>
+        <p style="margin: 0.25rem 0;"><strong>Memory total:</strong> <span th:text="${sysInfo.memoryTotalGb}"></span> GB</p>
+        <p style="margin: 0.25rem 0;"><strong>Memory available:</strong> <span th:text="${sysInfo.memoryAvailableGb}"></span> GB</p>
+        <p style="margin: 0.25rem 0;"><strong>CPU count:</strong> <span th:text="${sysInfo.cpuCount}"></span></p>
+    </div>
+    <h2>Author</h2>
+    <p th:text="${author}">Author</p>
+    <h2>Libraries used</h2>
+    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+        <li th:each="lib : ${libraries}" th:text="${lib}">lib</li>
+    </ul>
+</div>
+</body>
+</html>
