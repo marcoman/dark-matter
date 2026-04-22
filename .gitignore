@@ -1,6 +1,9 @@
 # Node / npm
 javascript/node_modules/
 
+# C++
+cpp/build/
+
 # Java / Maven
 java/target/
 java/.idea/
