@@ -46,5 +46,5 @@ override.tf.json
 .env
 .env.*
 
-# Load-test CSV output (scripts/evaluate_inline_page_load.py)
+# Load-test CSV output (python/scripts/evaluate_inline_page_load.py)
 inline_time_*.csv

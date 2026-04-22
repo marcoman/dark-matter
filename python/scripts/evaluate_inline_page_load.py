@@ -11,7 +11,7 @@ Environment:
 Output CSV (repo root): inline_time_YYYYMMDD_HHMMSS.csv
 Columns: username, start_time, end_time, page_load_time_us, mam_inline_about
 
-Usage (from repo root, with app running):
+Usage (from the python/ directory, with app running):
   export LAUNCHDARKLY_SDK_KEY=...
   python scripts/evaluate_inline_page_load.py
 """
@@ -31,7 +31,7 @@ import requests
 from ldclient import Context, LDClient
 from ldclient.config import Config
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_BASE = "http://127.0.0.1:5000"
 USER_COUNT = 300
 

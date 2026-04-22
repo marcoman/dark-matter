@@ -4,7 +4,7 @@ FROM python:3.12-slim AS builder
 WORKDIR /app
 
 RUN pip install --no-cache-dir --upgrade pip
-COPY requirements.txt .
+COPY python/requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # ---- Run stage: minimal image ----
@@ -20,10 +20,10 @@ ENV PYTHONUNBUFFERED=1 \
 COPY --from=builder /root/.local /root/.local
 
 # Copy application
-COPY app.py .
-COPY templates/ templates/
-COPY static/ static/
+COPY python/app.py python/
+COPY python/templates/ python/templates/
+COPY python/static/ python/static/
 
 EXPOSE 5000
 
-CMD ["python", "app.py"]
+CMD ["python", "python/app.py"]
