@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Dark Matter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --surface: #ffffff;
+            --text: #1a1a2e;
+            --text-muted: #64748b;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --border: #e2e8f0;
+            --radius: 12px;
+            --shadow: 0 1px 3px rgba(0,0,0,.08);
+            --shadow-lg: 0 10px 40px -10px rgba(0,0,0,.15);
+            --error: #dc2626;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        .login-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 24rem;
+        }
+        h1 { font-size: 1.75rem; font-weight: 700; margin: 0 0 0.25rem 0; }
+        .subtitle { color: var(--text-muted); font-size: 0.9375rem; margin-bottom: 1.5rem; }
+        .error { color: var(--error); font-size: 0.875rem; margin-bottom: 1rem; }
+        label { display: block; font-weight: 500; font-size: 0.875rem; margin-bottom: 0.375rem; }
+        input[type="text"] {
+            width: 100%;
+            padding: 0.625rem 0.75rem;
+            font-family: inherit;
+            font-size: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 1.25rem;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+        .btn {
+            display: inline-block;
+            padding: 0.625rem 1.25rem;
+            font-family: inherit;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            background: var(--accent);
+            color: white;
+            width: 100%;
+            transition: background .15s;
+        }
+        .btn:hover { background: var(--accent-hover); }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h1>Dark Matter</h1>
+        <p class="subtitle">Enter your name to continue (no password).</p>
+        <% if (error) { %><p class="error"><%= error %></p><% } %>
+        <form method="post" action="/">
+            <label for="name">Name</label>
+            <input id="name" name="name" type="text" autofocus required placeholder="Your name">
+            <button type="submit" class="btn">Log in</button>
+        </form>
+    </div>
+</body>
+</html>

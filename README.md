@@ -1,13 +1,14 @@
 # Dark Matter
 
-This repository contains **two implementations** of the same web application:
+This repository contains **three implementations** of the same web application:
 
 | Directory | Stack |
 |-----------|--------|
 | [`python/`](python/) | Flask, Jinja2 templates, LaunchDarkly Python SDK |
 | [`java/`](java/) | Spring Boot, Thymeleaf, LaunchDarkly Java SDK |
+| [`javascript/`](javascript/) | Express, EJS templates, LaunchDarkly Node.js SDK |
 
-Both apps expose the same routes and product behavior: name-only login, four-corner compass navigation, optional About page, banner styling and experiments driven by **LaunchDarkly** feature flags, and browser-reported metrics for experiments (e.g. nav theme, inline About load time).
+All three apps expose the same routes and product behavior: name-only login, four-corner compass navigation, optional About page, banner styling and experiments driven by **LaunchDarkly** feature flags, and browser-reported metrics for experiments (e.g. nav theme, inline About load time).
 
 ## Shared behavior
 
@@ -23,5 +24,6 @@ Feature flag names and event keys are documented in detail in [`python/README.md
 
 - **[`python/README.md`](python/README.md)** — Flask setup, `pip` / venv, eval script, Docker image under `python/`.
 - **[`java/README.md`](java/README.md)** — SDKMAN/JDK 21, Maven Wrapper, Spring Boot run and Docker image under `java/`.
+- **[`javascript/README.md`](javascript/README.md)** — Node.js/npm, Express, `npm start`, Docker image under `javascript/`.
 
-Choose one implementation to run locally; you do not need both runtimes unless you are developing or comparing stacks.
+Choose one implementation to run locally; you only need one runtime unless you are developing or comparing stacks.

@@ -1,0 +1,20 @@
+<div class="card inline-about">
+    <h1>About Dark Matter</h1>
+    <p>Dark Matter is a Node.js (Express) application with feature-flagged navigation and an about page.</p>
+    <h2>System details</h2>
+    <div class="about-info">
+        <p style="margin: 0.25rem 0;"><strong>Node:</strong> <%= sysInfo.nodeVersion %></p>
+        <p style="margin: 0.25rem 0;"><strong>OS:</strong> <%= sysInfo.os %> <%= sysInfo.osRelease %></p>
+        <p style="margin: 0.25rem 0;"><strong>Machine:</strong> <%= sysInfo.machine %></p>
+        <p style="margin: 0.25rem 0;"><strong>Processor:</strong> <%= sysInfo.processor %></p>
+        <p style="margin: 0.25rem 0;"><strong>Memory total:</strong> <%= sysInfo.memoryTotalGb %> GB</p>
+        <p style="margin: 0.25rem 0;"><strong>Memory available:</strong> <%= sysInfo.memoryAvailableGb %> GB</p>
+        <p style="margin: 0.25rem 0;"><strong>CPU count:</strong> <%= sysInfo.cpuCount %></p>
+    </div>
+    <h2>Author</h2>
+    <p><%= author %></p>
+    <h2>Libraries used</h2>
+    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+        <% libraries.forEach(function (lib) { %><li><%= lib %></li><% }); %>
+    </ul>
+</div>

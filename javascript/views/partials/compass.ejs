@@ -1,0 +1,18 @@
+<div class="compass-wrap">
+    <p class="from-page" style="margin-bottom: 0.5rem;">Navigate</p>
+    <div class="compass">
+        <span class="<%= navUp ? 'up' : 'up disabled' %>">
+            <% if (navUp) { %><a href="/nav/go/up"><%= navCaseUpper ? 'UP' : 'up' %></a><% } else { %><%= navCaseUpper ? 'UP' : 'up' %><% } %>
+        </span>
+        <span class="<%= navLeft ? 'left' : 'left disabled' %>">
+            <% if (navLeft) { %><a href="/nav/go/left"><%= navCaseUpper ? 'LEFT' : 'left' %></a><% } else { %><%= navCaseUpper ? 'LEFT' : 'left' %><% } %>
+        </span>
+        <span class="center">·</span>
+        <span class="<%= navRight ? 'right' : 'right disabled' %>">
+            <% if (navRight) { %><a href="/nav/go/right"><%= navCaseUpper ? 'RIGHT' : 'right' %></a><% } else { %><%= navCaseUpper ? 'RIGHT' : 'right' %><% } %>
+        </span>
+        <span class="<%= navDown ? 'down' : 'down disabled' %>">
+            <% if (navDown) { %><a href="/nav/go/down"><%= navCaseUpper ? 'DOWN' : 'down' %></a><% } else { %><%= navCaseUpper ? 'DOWN' : 'down' %><% } %>
+        </span>
+    </div>
+</div>

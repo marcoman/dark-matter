@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof title !== "undefined" && title ? title : "Dark Matter" %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Set server-side so we avoid Jinja inside HTML style="" (breaks CSS diagnostics) */
+            --banner-bg: <%= typeof bgColor !== "undefined" && bgColor ? bgColor : "white" %>;
+            --surface: #ffffff;
+            --text: #1a1a2e;
+            --text-muted: #64748b;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --border: #e2e8f0;
+            --radius: 12px;
+            --shadow: 0 1px 3px rgba(0,0,0,.08);
+            --shadow-lg: 0 10px 40px -10px rgba(0,0,0,.15);
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            background: #ffffff;
+            color: var(--text);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        /* Feature-flag background applies only to the top banner */
+        .banner {
+            width: 100%;
+            padding: 1rem 1.5rem 1.25rem;
+            background-color: var(--banner-bg);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+        }
+        .banner-inner {
+            max-width: 56rem;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem 1rem;
+        }
+        /* Light panel: text reads the same regardless of MAM_BG_COLOR behind the banner */
+        .banner-screen {
+            display: inline-flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem 1rem;
+            padding: 0.5rem 1rem;
+            background: #f1f5f9;
+            border: 1px solid rgba(15, 23, 42, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+        }
+        .banner-screen--grow {
+            flex: 1 1 auto;
+            min-width: min(100%, 14rem);
+        }
+        .banner-screen .user { font-weight: 600; color: var(--text); }
+        .banner-screen a:not(.btn) { font-weight: 500; }
+        .banner-screen .btn-ghost {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid var(--border);
+        }
+        .banner-screen .btn-ghost:hover {
+            background: #ffffff;
+        }
+        .banner-screen__sep {
+            width: 1px;
+            height: 1.25rem;
+            background: var(--border);
+            flex-shrink: 0;
+        }
+        .banner-toggle form { margin: 0; }
+        .app {
+            max-width: 56rem;
+            margin: 0 auto;
+            padding: 1.25rem 1.5rem 2rem;
+            background: #ffffff;
+        }
+        /* Navigation main area: light/dark theme (banner above is unchanged) */
+        .nav-section {
+            position: relative;
+            padding: 2.75rem 1.25rem 1.75rem;
+            border-radius: var(--radius);
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .nav-section--light {
+            --nav-text: #0f172a;
+            --nav-text-muted: #64748b;
+            --nav-border: #e2e8f0;
+            --nav-card-bg: #ffffff;
+            --nav-muted-bg: rgba(15, 23, 42, 0.06);
+            background: #f1f5f9;
+            color: var(--nav-text);
+        }
+        .nav-section--dark {
+            --nav-text: #f1f5f9;
+            --nav-text-muted: #94a3b8;
+            --nav-border: rgba(148, 163, 184, 0.35);
+            --nav-card-bg: #1e293b;
+            --nav-muted-bg: rgba(0, 0, 0, 0.28);
+            background: #0f172a;
+            color: var(--nav-text);
+        }
+        .nav-section .card {
+            background: var(--nav-card-bg);
+            border-color: var(--nav-border);
+            color: var(--nav-text);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+        .nav-section--dark .card {
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+        }
+        .nav-section .from-page {
+            color: var(--nav-text-muted);
+        }
+        .nav-section h1,
+        .nav-section h2 {
+            color: var(--nav-text);
+        }
+        .nav-section .about-info {
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            background: var(--nav-muted-bg);
+            border: 1px solid var(--nav-border);
+        }
+        .nav-section .compass-wrap {
+            border-top-color: var(--nav-border);
+        }
+        .nav-section .compass .center,
+        .nav-section .compass .disabled {
+            color: var(--nav-text-muted);
+        }
+        /* Toggle: fixed styling so it stays readable on both light and dark nav backgrounds */
+        .nav-theme-toggle {
+            position: absolute;
+            top: 0.35rem;
+            right: 0.35rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.45rem 0.85rem;
+            font-family: inherit;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            line-height: 1.2;
+            color: #ffffff;
+            background: #312e81;
+            border: 2px solid rgba(255, 255, 255, 0.95);
+            border-radius: 999px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+            transition: background 0.15s ease, transform 0.05s ease;
+        }
+        .nav-theme-toggle:hover {
+            background: #4338ca;
+            color: #ffffff;
+        }
+        .nav-theme-toggle:focus-visible {
+            outline: 2px solid #fbbf24;
+            outline-offset: 3px;
+        }
+        .nav-theme-toggle__icon {
+            font-size: 1rem;
+            line-height: 1;
+        }
+        .btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background .15s, color .15s;
+        }
+        .btn-ghost { background: rgba(0, 0, 0, 0.06); color: var(--text); }
+        .btn-ghost:hover { background: rgba(0, 0, 0, 0.1); color: var(--text); text-decoration: none; }
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+        .btn-primary:hover { background: var(--accent-hover); color: white; }
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 1.5rem 2rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+        }
+        .from-page {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+        h1 { font-size: 1.75rem; font-weight: 700; margin: 0 0 0.5rem 0; }
+        h2 { font-size: 1.25rem; font-weight: 600; margin: 0 0 1rem 0; color: var(--text); }
+        a { color: var(--accent); text-decoration: none; font-weight: 500; }
+        a:hover { text-decoration: underline; }
+        .compass-wrap {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+        .compass {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            grid-template-rows: auto auto auto;
+            gap: 0.5rem 1rem;
+            max-width: 16rem;
+            margin: 0 auto;
+            place-items: center;
+        }
+        .compass .up { grid-column: 2; grid-row: 1; }
+        .compass .down { grid-column: 2; grid-row: 3; }
+        .compass .left { grid-column: 1; grid-row: 2; }
+        .compass .right { grid-column: 3; grid-row: 2; }
+        .compass .center { grid-column: 2; grid-row: 2; color: var(--text-muted); font-size: 1.25rem; }
+        .compass a {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            background: var(--accent);
+            color: white;
+            font-weight: 500;
+            transition: background .15s, transform .05s;
+        }
+        .compass a:hover { background: var(--accent-hover); text-decoration: none; }
+        .compass .disabled {
+            color: var(--text-muted);
+            cursor: default;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+        }
+        .nav-section .inline-about {
+            margin-top: 1.5rem;
+        }
+        .nav-section .inline-about h1 {
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <% if (typeof name !== 'undefined' && name) { %>
+    <header class="banner">
+        <div class="banner-inner">
+            <div class="banner-screen banner-screen--grow">
+                <span class="user">Hello, <%= name %></span>
+                <a href="/logout" class="btn btn-ghost">Logout</a>
+                <% if (typeof showAboutNav !== 'undefined' && showAboutNav) { %>
+                <span class="banner-screen__sep" aria-hidden="true"></span>
+                <a href="/about">About</a>
+                <% } %>
+            </div>
+            <% if (typeof showToggleCase !== 'undefined' && showToggleCase) { %>
+            <div class="banner-screen banner-toggle">
+                <form method="post" action="/toggle-nav-case">
+                    <input type="hidden" name="next_page" value="<%= typeof currentPath !== 'undefined' ? currentPath : '' %>">
+                    <button type="submit" class="btn btn-primary">
+                        <% if (navCaseUpper) { %>SWITCH->case<% } else { %>switch->CASE<% } %>
+                    </button>
+                </form>
+            </div>
+            <% } %>
+        </div>
+    </header>
+    <% } %>
+    <div class="app">
+        <div class="nav-section nav-section--light" id="nav-section"
+             data-mam-dark-mode="<%= (typeof showDarkModeToggle !== 'undefined' && showDarkModeToggle) ? 'true' : 'false' %>"
+             data-report-url="/api/ui-color-mode"
+             data-inline-metric-url="/api/inline-about-load">
+            <% if (typeof showDarkModeToggle !== 'undefined' && showDarkModeToggle) { %>
+            <button type="button" class="nav-theme-toggle" id="nav-theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">
+                <span class="nav-theme-toggle__icon" aria-hidden="true">🌙</span>
+                <span class="nav-theme-toggle__label">Dark mode</span>
+            </button>
+            <% } %>
+            <div class="nav-section__inner">
+                <%- body %>
+            </div>
+            <% if (typeof showInlineAbout !== 'undefined' && showInlineAbout) { %>
+            <%- include('partials/inline_about') %>
+            <% } %>
+        </div>
+    </div>
+    <script>
+    (function () {
+        var STORAGE_KEY = 'dark-matter-nav-theme';
+        var REPORT_SS_KEY = 'ld_ui_color_mode_last_sent';
+        var shell = document.getElementById('nav-section');
+        if (!shell) return;
+        var darkFlagOn = shell.getAttribute('data-mam-dark-mode') === 'true';
+        var reportUrl = shell.getAttribute('data-report-url') || '';
+        var btn = document.getElementById('nav-theme-toggle');
+        var labelEl = btn ? btn.querySelector('.nav-theme-toggle__label') : null;
+        var iconEl = btn ? btn.querySelector('.nav-theme-toggle__icon') : null;
+
+        function applyVisual(theme) {
+            var isDark = theme === 'dark';
+            shell.classList.remove('nav-section--light', 'nav-section--dark');
+            shell.classList.add(isDark ? 'nav-section--dark' : 'nav-section--light');
+            if (btn) {
+                btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+                if (isDark) {
+                    btn.setAttribute('aria-label', 'Switch to light mode');
+                    if (labelEl) labelEl.textContent = 'Light mode';
+                    if (iconEl) iconEl.textContent = '☀️';
+                } else {
+                    btn.setAttribute('aria-label', 'Switch to dark mode');
+                    if (labelEl) labelEl.textContent = 'Dark mode';
+                    if (iconEl) iconEl.textContent = '🌙';
+                }
+            }
+        }
+
+        function persistTheme(theme) {
+            try { localStorage.setItem(STORAGE_KEY, theme); } catch (e) {}
+        }
+
+        function reportMode(mode) {
+            if (!darkFlagOn || !reportUrl) return;
+            try {
+                var last = sessionStorage.getItem(REPORT_SS_KEY);
+                if (last === mode) return;
+                sessionStorage.setItem(REPORT_SS_KEY, mode);
+            } catch (e) {}
+            fetch(reportUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ mode: mode })
+            }).catch(function () {});
+        }
+
+        if (!darkFlagOn) {
+            applyVisual('light');
+            return;
+        }
+
+        var stored = null;
+        try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+        var theme = stored === 'dark' ? 'dark' : 'light';
+        applyVisual(theme);
+        persistTheme(theme);
+        reportMode(theme);
+
+        if (btn) {
+            btn.addEventListener('click', function () {
+                var next = shell.classList.contains('nav-section--dark') ? 'light' : 'dark';
+                applyVisual(next);
+                persistTheme(next);
+                try { sessionStorage.removeItem(REPORT_SS_KEY); } catch (e) {}
+                reportMode(next);
+            });
+        }
+    })();
+    </script>
+    <% if (typeof name !== "undefined" && name && (typeof recordInlineLoadMetric === "undefined" || recordInlineLoadMetric)) { %>
+    <script>
+    (function () {
+        var shell = document.getElementById('nav-section');
+        if (!shell) return;
+        var url = shell.getAttribute('data-inline-metric-url');
+        if (!url) return;
+        function sendLoadMetric() {
+            var loadMs = null;
+            var list = performance.getEntriesByType && performance.getEntriesByType('navigation');
+            if (list && list.length && list[0].loadEventEnd > 0) {
+                loadMs = Math.round(list[0].loadEventEnd - list[0].startTime);
+            } else if (window.performance && performance.timing && performance.timing.loadEventEnd) {
+                var t = performance.timing;
+                loadMs = t.loadEventEnd - t.navigationStart;
+            }
+            if (loadMs == null || loadMs < 0 || loadMs > 600000) return;
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ load_ms: loadMs })
+            }).catch(function () {});
+        }
+        if (document.readyState === 'complete') {
+            sendLoadMetric();
+        } else {
+            window.addEventListener('load', sendLoadMetric);
+        }
+    })();
+    </script>
+    <% } %>
+</body>
+</html>
