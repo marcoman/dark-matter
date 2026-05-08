@@ -108,6 +108,8 @@ def get_ld_context(user_name: str | None = None) -> Context | None:
         return None
     if user_name is not None and user_name != name:
         return None
+    if "test" in name.lower():
+        return Context.builder(f"anon-{name}").name(name).anonymous(True).build()
     if session.get("ld_role") is None or session.get("ld_favorite_color") is None:
         prof = ld_profile_for_display_name(name)
         session["ld_role"] = prof["role"]
@@ -281,14 +283,22 @@ def login():
         session["from_page"] = None
         session["nav_case"] = "lower"
         session.pop("_ld_ui_color_mode_metric_sent", None)
-        org_team, org_team_size = random.choice(LD_ORG_TEAMS)
-        favorite_color = random.choice(LD_FAVORITE_COLORS)
-        session["ld_role"] = random.choice(LD_ROLES)
-        session["ld_location"] = random.choice(LD_LOCATIONS)
-        session["ld_org_team"] = org_team
-        session["ld_org_team_size"] = org_team_size
-        session["ld_favorite_color"] = favorite_color
-        session["ld_favorite_color_code"] = LD_FAVORITE_COLOR_CODES[favorite_color]
+        if "test" not in name.lower():
+            org_team, org_team_size = random.choice(LD_ORG_TEAMS)
+            favorite_color = random.choice(LD_FAVORITE_COLORS)
+            session["ld_role"] = random.choice(LD_ROLES)
+            session["ld_location"] = random.choice(LD_LOCATIONS)
+            session["ld_org_team"] = org_team
+            session["ld_org_team_size"] = org_team_size
+            session["ld_favorite_color"] = favorite_color
+            session["ld_favorite_color_code"] = LD_FAVORITE_COLOR_CODES[favorite_color]
+        else:
+            session.pop("ld_role", None)
+            session.pop("ld_location", None)
+            session.pop("ld_org_team", None)
+            session.pop("ld_org_team_size", None)
+            session.pop("ld_favorite_color", None)
+            session.pop("ld_favorite_color_code", None)
         return redirect(url_for("upper_left"))
     if session.get("name"):
         return redirect(url_for("upper_left"))
