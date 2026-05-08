@@ -33,6 +33,8 @@ These are the feature flags by name that I use in this example:
 
 The LaunchDarkly SDK key is read from the environment variable **`LAUNCHDARKLY_SDK_KEY`**.
 
+Evaluation uses a **multi-context**: a **user** context (name, role, location) and an **organization** context (team, team size). On each login, role and location are chosen at random from fixed pools, and an organization is chosen at random (HR/5, OPS/10, Sales/15, Finance/20). Those values are stored in the Flask session so flag evaluation stays consistent until logout.
+
 ### Navigation custom events (metrics)
 
 Compass clicks go through **`GET /nav/go/<direction>`** (`up`, `down`, `left`, `right`). Each valid click sends a LaunchDarkly custom event via `LDClient.track()`:
@@ -189,16 +191,17 @@ Omit `-e LAUNCHDARKLY_SDK_KEY=...` to run with default flag behavior. Open `http
 
 ### Script: inline page load + `MAM_INLINE_ABOUT` (CSV)
 
-With the Flask app running, this script logs in as `user1` … `user300`, measures time for the first page (login POST + redirect to the nav page), evaluates **`MAM_INLINE_ABOUT`** from LaunchDarkly with the same context as the app, and writes **`inline_time_YYYYMMDD_HHMMSS.csv`** in the project root (timestamp = test start).  
+With the Flask app running, this script logs in as `user1` … `user300`, measures time for the first page (login POST + redirect to the nav page), reads **`MAM_INLINE_ABOUT`** via **`GET /api/ld-flags`** (same session and multi-context as the app), and writes **`inline_time_YYYYMMDD_HHMMSS.csv`** in the project root (timestamp = test start).  
 After each successful login/page load, it also POSTs to `/api/inline-about-load` so the server can emit the LaunchDarkly metric event `inline_about`.
 
 From the `python/` directory (with the Flask app running):
 
 ```bash
-export LAUNCHDARKLY_SDK_KEY=...
 export DARK_MATTER_BASE_URL=http://127.0.0.1:5000   # optional
 python scripts/evaluate_inline_page_load.py
 ```
+
+The app still needs **`LAUNCHDARKLY_SDK_KEY`** if you want live flag values from LaunchDarkly; the script does not use the SDK directly.
 
 Columns: `username`, `start_time`, `end_time`, `page_load_time_us`, `mam_inline_about` (`true` / `false`).
 

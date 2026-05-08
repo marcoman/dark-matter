@@ -4,14 +4,25 @@ Uses LaunchDarkly for feature flags (about, banner color, inline about, etc.).
 Written by Marco, 2026.
 
 """
+from __future__ import annotations
+
 import os
 import platform
+import random
 import sys
 
 import psutil
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 from ldclient import Context, LDClient
 from ldclient.config import Config
+
+from ld_context_builder import (
+    LD_LOCATIONS,
+    LD_ORG_TEAMS,
+    LD_ROLES,
+    build_multi_context,
+    ld_profile_for_display_name,
+)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dark-matter-dev-secret-change-in-production")
@@ -88,8 +99,26 @@ def get_ld_client():
     return _ld_client if _ld_client else None
 
 
-def get_ld_context(user_name: str) -> Context | None:
-    return Context.builder(f"user-{user_name}").set("name", user_name).build() if user_name else None
+def get_ld_context(user_name: str | None = None) -> Context | None:
+    """LaunchDarkly multi-context (user + organization) from the logged-in session."""
+    name = session.get("name")
+    if not name:
+        return None
+    if user_name is not None and user_name != name:
+        return None
+    if session.get("ld_role") is None:
+        prof = ld_profile_for_display_name(name)
+        session["ld_role"] = prof["role"]
+        session["ld_location"] = prof["location"]
+        session["ld_org_team"] = prof["org_team"]
+        session["ld_org_team_size"] = prof["org_team_size"]
+    return build_multi_context(
+        display_name=name,
+        role=str(session["ld_role"]),
+        location=str(session["ld_location"]),
+        org_team=str(session["ld_org_team"]),
+        org_team_size=int(session["ld_org_team_size"]),
+    )
 
 
 def get_feature_flags(user_name: str) -> dict:
@@ -108,17 +137,18 @@ def get_feature_flags(user_name: str) -> dict:
         return flags
     # Attach a flag-specific listener for MAM_BG_COLOR for this context once
     try:
-        if ctx.key not in _bg_color_listener_context_keys:
+        fq = ctx.fully_qualified_key
+        if fq not in _bg_color_listener_context_keys:
             def _on_bg_color_change(change):
                 # change has .key, .old_value, .new_value
                 print(
-                    f"[LaunchDarkly] MAM_BG_COLOR changed for {ctx.key}: "
+                    f"[LaunchDarkly] MAM_BG_COLOR changed for {fq}: "
                     f"{change.old_value!r} -> {change.new_value!r}",
                     flush=True,
                 )
 
             client.flag_tracker.add_flag_value_change_listener("MAM_BG_COLOR", ctx, _on_bg_color_change)
-            _bg_color_listener_context_keys.add(ctx.key)
+            _bg_color_listener_context_keys.add(fq)
     except Exception:
         # Listener attachment failure should not break the app; continue with defaults/eval
         pass
@@ -245,6 +275,11 @@ def login():
         session["from_page"] = None
         session["nav_case"] = "lower"
         session.pop("_ld_ui_color_mode_metric_sent", None)
+        org_team, org_team_size = random.choice(LD_ORG_TEAMS)
+        session["ld_role"] = random.choice(LD_ROLES)
+        session["ld_location"] = random.choice(LD_LOCATIONS)
+        session["ld_org_team"] = org_team
+        session["ld_org_team_size"] = org_team_size
         return redirect(url_for("upper_left"))
     if session.get("name"):
         return redirect(url_for("upper_left"))
@@ -270,6 +305,13 @@ def toggle_nav_case():
     if next_page:
         return redirect(next_page)
     return redirect(url_for("upper_left"))
+
+
+@app.route("/api/ld-flags", methods=["GET"])
+@require_login
+def api_ld_flags():
+    """Current LaunchDarkly flag snapshot for the logged-in session (multi-context)."""
+    return jsonify(get_feature_flags(session["name"]))
 
 
 @app.route("/api/ui-color-mode", methods=["POST"])
