@@ -1,11 +1,24 @@
-{# Only render when user is logged in (name is set). Pass nav_up, nav_down, nav_left, nav_right as booleans (enabled directions). #}
+{# Only render when user is logged in (name is set). Pass nav_up, nav_down, nav_left, nav_right as booleans (enabled directions).
+   button_text: dict from MAM_BUTTON_TEXT (keys down, left, right, up). #}
 {% if name %}
 <div class="compass-wrap">
     <p class="from-page" style="margin-bottom: 0.5rem;">Navigate</p>
-    {% set label_up = "UP" if nav_case_upper else "up" %}
-    {% set label_down = "DOWN" if nav_case_upper else "down" %}
-    {% set label_left = "LEFT" if nav_case_upper else "left" %}
-    {% set label_right = "RIGHT" if nav_case_upper else "right" %}
+    {% set bt = button_text if button_text is defined else {} %}
+    {% set raw_up = bt.get('up', 'Up') %}
+    {% set raw_down = bt.get('down', 'Down') %}
+    {% set raw_left = bt.get('left', 'Left') %}
+    {% set raw_right = bt.get('right', 'Right') %}
+    {% if nav_case_upper|default(false) %}
+    {% set label_up = raw_up|upper %}
+    {% set label_down = raw_down|upper %}
+    {% set label_left = raw_left|upper %}
+    {% set label_right = raw_right|upper %}
+    {% else %}
+    {% set label_up = raw_up|lower %}
+    {% set label_down = raw_down|lower %}
+    {% set label_left = raw_left|lower %}
+    {% set label_right = raw_right|lower %}
+    {% endif %}
     <div class="compass">
         <span class="up {% if not nav_up %}disabled{% endif %}">{% if nav_up %}<a href="{{ url_for('nav_go', direction='up') }}">{{ label_up }}</a>{% else %}{{ label_up }}{% endif %}</span>
         <span class="left {% if not nav_left %}disabled{% endif %}">{% if nav_left %}<a href="{{ url_for('nav_go', direction='left') }}">{{ label_left }}</a>{% else %}{{ label_left }}{% endif %}</span>

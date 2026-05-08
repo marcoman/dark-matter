@@ -6,6 +6,7 @@ Written by Marco, 2026.
 """
 from __future__ import annotations
 
+import json
 import os
 import platform
 import random
@@ -80,6 +81,31 @@ _NAV_TRANSITIONS: dict[str, dict[str, tuple[str, str]]] = {
 }
 _VALID_NAV_DIRECTIONS = frozenset({"up", "down", "left", "right"})
 
+_DEFAULT_MAM_BUTTON_TEXT: dict[str, str] = {
+    "down": "Down",
+    "left": "Left",
+    "right": "Right",
+    "up": "Up",
+}
+
+
+def _normalize_mam_button_text(raw: object) -> dict[str, str]:
+    """Parse MAM_BUTTON_TEXT JSON flag; merge with English defaults for missing keys."""
+    data: object = raw
+    if isinstance(raw, str):
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            data = None
+    if not isinstance(data, dict):
+        return dict(_DEFAULT_MAM_BUTTON_TEXT)
+    out = dict(_DEFAULT_MAM_BUTTON_TEXT)
+    for key in _DEFAULT_MAM_BUTTON_TEXT:
+        val = data.get(key)
+        if val is not None and str(val).strip() != "":
+            out[key] = str(val)
+    return out
+
 
 def get_ld_client():
     global _ld_client
@@ -137,6 +163,7 @@ def get_feature_flags(user_name: str) -> dict:
         "MAM_DARK_MODE": False,
         "MAM_INLINE_ABOUT": False,
         "MAM_ABOUT_SIZE": 1,
+        "MAM_BUTTON_TEXT": dict(_DEFAULT_MAM_BUTTON_TEXT),
     }
     client = get_ld_client()
     if not client or not client.is_initialized():
@@ -172,6 +199,8 @@ def get_feature_flags(user_name: str) -> dict:
             flags["MAM_ABOUT_SIZE"] = int(about_size)
         except (TypeError, ValueError):
             flags["MAM_ABOUT_SIZE"] = 1
+        btn_raw = client.variation("MAM_BUTTON_TEXT", ctx, _DEFAULT_MAM_BUTTON_TEXT)
+        flags["MAM_BUTTON_TEXT"] = _normalize_mam_button_text(btn_raw)
     except Exception:
         pass
     return flags
@@ -412,6 +441,7 @@ def upper_left():
         show_toggle_case=flags["MAM_TOGGLE_CASE"],
         show_dark_mode_toggle=flags["MAM_DARK_MODE"],
         nav_case_upper=session.get("nav_case", "lower") == "upper",
+        button_text=flags["MAM_BUTTON_TEXT"],
         **extras,
     )
 
@@ -435,6 +465,7 @@ def upper_right():
         show_toggle_case=flags["MAM_TOGGLE_CASE"],
         show_dark_mode_toggle=flags["MAM_DARK_MODE"],
         nav_case_upper=session.get("nav_case", "lower") == "upper",
+        button_text=flags["MAM_BUTTON_TEXT"],
         **ctx,
     )
 
@@ -458,6 +489,7 @@ def lower_left():
         show_toggle_case=flags["MAM_TOGGLE_CASE"],
         show_dark_mode_toggle=flags["MAM_DARK_MODE"],
         nav_case_upper=session.get("nav_case", "lower") == "upper",
+        button_text=flags["MAM_BUTTON_TEXT"],
         **ctx,
     )
 
@@ -481,6 +513,7 @@ def lower_right():
         show_toggle_case=flags["MAM_TOGGLE_CASE"],
         show_dark_mode_toggle=flags["MAM_DARK_MODE"],
         nav_case_upper=session.get("nav_case", "lower") == "upper",
+        button_text=flags["MAM_BUTTON_TEXT"],
         **ctx,
     )
 

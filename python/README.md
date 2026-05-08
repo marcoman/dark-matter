@@ -30,6 +30,19 @@ These are the feature flags by name that I use in this example:
 - **MAM_TOGGLE_CASE** (boolean): When enabled, a button appears on navigation pages to toggle compass link labels between lower and upper case (for experiments).  This button is designed to test the collection of LD metrics.
 - **MAM_DARK_MODE** (boolean, default **off**): When enabled, the nav-area **light/dark** toggle is shown; when off, the nav area stays light and the toggle is hidden.  Ths toggle is designed ot test experimentation to find out, "Do people prefer dark or light mode?"
 - **MAM_INLINE_ABOUT** (boolean, default **off**): When enabled, the same **About** content shown on `/about` is rendered **below** the compass on the four navigation corner pages. When off, those pages look as before (no inline block).
+- **MAM_ABOUT_SIZE** (number, default **1**): Controls About page body text size (small / medium / large) from thresholds in the app.
+- **MAM_BUTTON_TEXT** (JSON): Labels for the compass buttons. Each variation is an object with keys **`down`**, **`left`**, **`right`**, **`up`** (same shape for every language). Example English default:
+
+```json
+{
+  "down": "Down",
+  "left": "Left",
+  "right": "Right",
+  "up": "Up"
+}
+```
+
+Create separate flag variations (e.g. English, Spanish, Latin) in LaunchDarkly with that structure; missing keys fall back to the English defaults. When **MAM_TOGGLE_CASE** is on, the app applies **lower** or **upper** case to those strings for the case experiment.
 
 The LaunchDarkly SDK key is read from the environment variable **`LAUNCHDARKLY_SDK_KEY`**.
 
