@@ -16,6 +16,7 @@ import psutil
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 from ldclient import Context, LDClient
 from ldclient.config import Config
+from ldclient.evaluation import EvaluationDetail
 
 from ld_context_builder import (
     LD_FAVORITE_COLOR_CODES,
@@ -107,6 +108,88 @@ def _normalize_mam_button_text(raw: object) -> dict[str, str]:
     return out
 
 
+_LD_FLAG_ORDER: tuple[str, ...] = (
+    "MAM_ABOUT",
+    "MAM_BG_COLOR",
+    "MAM_TOGGLE_CASE",
+    "MAM_DARK_MODE",
+    "MAM_INLINE_ABOUT",
+    "MAM_ABOUT_SIZE",
+    "MAM_BUTTON_TEXT",
+)
+
+
+def _ld_eval_default(flag_key: str) -> object:
+    if flag_key == "MAM_ABOUT":
+        return False
+    if flag_key == "MAM_BG_COLOR":
+        return "white"
+    if flag_key in ("MAM_TOGGLE_CASE", "MAM_DARK_MODE", "MAM_INLINE_ABOUT"):
+        return False
+    if flag_key == "MAM_ABOUT_SIZE":
+        return 1
+    if flag_key == "MAM_BUTTON_TEXT":
+        return dict(_DEFAULT_MAM_BUTTON_TEXT)
+    raise KeyError(flag_key)
+
+
+def _ld_flag_eval_report_enabled() -> bool:
+    return os.environ.get("LD_FLAG_EVAL_REPORT", "1").lower() not in ("0", "false", "no")
+
+
+def _ld_flag_eval_colors_enabled() -> bool:
+    if os.environ.get("NO_COLOR", "").strip():
+        return False
+    return sys.stderr.isatty()
+
+
+def _ld_reason_color(kind: object, colors: bool) -> str:
+    if not colors:
+        return ""
+    k = str(kind or "").upper()
+    return {
+        "OFF": "\033[90m",
+        "FALLTHROUGH": "\033[36m",
+        "TARGET_MATCH": "\033[32m",
+        "RULE_MATCH": "\033[32m",
+        "SEGMENT_MATCH": "\033[32m",
+        "PREREQUISITE_FAILED": "\033[31m",
+        "ERROR": "\033[31m",
+    }.get(k, "\033[33m")
+
+
+def _log_ld_variation_detail(flag_key: str, detail: EvaluationDetail) -> None:
+    """Print flag name, served value, and evaluation reason (ANSI colors when stderr is a TTY)."""
+    colors = _ld_flag_eval_colors_enabled()
+    reset = "\033[0m" if colors else ""
+    bold = "\033[1m" if colors else ""
+    c_flag = f"{bold}\033[96m" if colors else ""
+    c_var = f"{bold}\033[92m" if colors else ""
+    reason_obj = detail.reason
+    reason_dict = reason_obj if isinstance(reason_obj, dict) else {"_non_dict_reason": repr(reason_obj)}
+    kind = reason_dict.get("kind")
+    c_reason = _ld_reason_color(kind, colors)
+    val = detail.value
+    if isinstance(val, (dict, list)):
+        val_s = json.dumps(val, ensure_ascii=False)
+    else:
+        val_s = repr(val)
+    reason_s = json.dumps(reason_dict, ensure_ascii=False, sort_keys=True)
+    idx = detail.variation_index
+    default_note = ""
+    try:
+        if detail.is_default_value():
+            default_note = " default_value=True"
+    except Exception:
+        pass
+    line = (
+        f"{c_flag}flag={flag_key}{reset}  "
+        f"{c_var}variation_index={idx} value={val_s}{default_note}{reset}  "
+        f"{c_reason}reason={reason_s}{reset}"
+    )
+    print(line, file=sys.stderr, flush=True)
+
+
 def get_ld_client():
     global _ld_client
     if _ld_client is None:
@@ -189,18 +272,25 @@ def get_feature_flags(user_name: str) -> dict:
         # Listener attachment failure should not break the app; continue with defaults/eval
         pass
     try:
-        flags["MAM_ABOUT"] = client.variation("MAM_ABOUT", ctx, False)
-        flags["MAM_BG_COLOR"] = client.variation("MAM_BG_COLOR", ctx, "white") or "white"
-        flags["MAM_TOGGLE_CASE"] = client.variation("MAM_TOGGLE_CASE", ctx, False)
-        flags["MAM_DARK_MODE"] = client.variation("MAM_DARK_MODE", ctx, False)
-        flags["MAM_INLINE_ABOUT"] = client.variation("MAM_INLINE_ABOUT", ctx, False)
+        if _ld_flag_eval_report_enabled():
+            hdr = f"[LaunchDarkly evaluation] context={ctx.fully_qualified_key}"
+            if _ld_flag_eval_colors_enabled():
+                hdr = f"\033[1;35m{hdr}\033[0m"
+            print(hdr, file=sys.stderr, flush=True)
+        for fk in _LD_FLAG_ORDER:
+            try:
+                detail = client.variation_detail(fk, ctx, _ld_eval_default(fk))
+                if _ld_flag_eval_report_enabled():
+                    _log_ld_variation_detail(fk, detail)
+                flags[fk] = detail.value
+            except Exception:
+                continue
+        flags["MAM_BG_COLOR"] = flags.get("MAM_BG_COLOR") or "white"
         try:
-            about_size = client.variation("MAM_ABOUT_SIZE", ctx, 1)
-            flags["MAM_ABOUT_SIZE"] = int(about_size)
+            flags["MAM_ABOUT_SIZE"] = int(flags.get("MAM_ABOUT_SIZE", 1))
         except (TypeError, ValueError):
             flags["MAM_ABOUT_SIZE"] = 1
-        btn_raw = client.variation("MAM_BUTTON_TEXT", ctx, _DEFAULT_MAM_BUTTON_TEXT)
-        flags["MAM_BUTTON_TEXT"] = _normalize_mam_button_text(btn_raw)
+        flags["MAM_BUTTON_TEXT"] = _normalize_mam_button_text(flags.get("MAM_BUTTON_TEXT"))
     except Exception:
         pass
     return flags

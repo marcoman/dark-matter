@@ -142,6 +142,8 @@ Set environment variables in the shell (or your process manager / container). Th
 | `SECRET_KEY` | Flask session signing secret (defaults in code for dev only). |
 | `PORT` | Listen port (default **5000**). |
 | `FLASK_DEBUG` | Set to `1` to enable Flask debug mode. |
+| `LD_FLAG_EVAL_REPORT` | When **`1`** (default), each flag evaluation logs **flag key**, **served value** (`variation_detail`), and **reason** to stderr with ANSI colors (TTY only). Set to **`0`** to disable. |
+| `NO_COLOR` | If set (non-empty), disables color in the LaunchDarkly evaluation report. |
 
 Example (sizes illustrative only):
 
