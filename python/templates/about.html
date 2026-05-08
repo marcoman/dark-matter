@@ -2,5 +2,7 @@
 {% block title %}About - Dark Matter{% endblock %}
 {% block body %}
 <p class="from-page"><a href="{{ url_for('upper_left') }}">← Back to Upper Left</a></p>
-{% include '_inline_about.html' %}
+<div class="{{ about_size_class|default('about-text--small') }}" data-about-size="{{ about_size|default(1) }}">
+    {% include '_inline_about.html' %}
+</div>
 {% endblock %}

@@ -136,6 +136,7 @@ def get_feature_flags(user_name: str) -> dict:
         "MAM_TOGGLE_CASE": False,
         "MAM_DARK_MODE": False,
         "MAM_INLINE_ABOUT": False,
+        "MAM_ABOUT_SIZE": 1,
     }
     client = get_ld_client()
     if not client or not client.is_initialized():
@@ -166,6 +167,11 @@ def get_feature_flags(user_name: str) -> dict:
         flags["MAM_TOGGLE_CASE"] = client.variation("MAM_TOGGLE_CASE", ctx, False)
         flags["MAM_DARK_MODE"] = client.variation("MAM_DARK_MODE", ctx, False)
         flags["MAM_INLINE_ABOUT"] = client.variation("MAM_INLINE_ABOUT", ctx, False)
+        try:
+            about_size = client.variation("MAM_ABOUT_SIZE", ctx, 1)
+            flags["MAM_ABOUT_SIZE"] = int(about_size)
+        except (TypeError, ValueError):
+            flags["MAM_ABOUT_SIZE"] = 1
     except Exception:
         pass
     return flags
@@ -486,6 +492,19 @@ def about():
     if not flags["MAM_ABOUT"]:
         return redirect(url_for("upper_left"))
     about_ctx = get_about_inline_context()
+    about_size = flags.get("MAM_ABOUT_SIZE", 1)
+    if isinstance(about_size, bool):
+        about_size = 1
+    try:
+        about_size_int = int(about_size)
+    except (TypeError, ValueError):
+        about_size_int = 1
+    if about_size_int <= 1:
+        about_size_class = "about-text--small"
+    elif about_size_int <= 10:
+        about_size_class = "about-text--medium"
+    else:
+        about_size_class = "about-text--large"
     report_ui_color_mode_when_flag_off(session["name"], flags)
     return render_template(
         "about.html",
@@ -497,6 +516,8 @@ def about():
         show_inline_about=False,
         record_inline_load_metric=False,
         nav_case_upper=session.get("nav_case", "lower") == "upper",
+        about_size=about_size_int,
+        about_size_class=about_size_class,
         **about_ctx,
     )
 
