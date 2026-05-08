@@ -17,6 +17,8 @@ from ldclient import Context, LDClient
 from ldclient.config import Config
 
 from ld_context_builder import (
+    LD_FAVORITE_COLOR_CODES,
+    LD_FAVORITE_COLORS,
     LD_LOCATIONS,
     LD_ORG_TEAMS,
     LD_ROLES,
@@ -106,18 +108,22 @@ def get_ld_context(user_name: str | None = None) -> Context | None:
         return None
     if user_name is not None and user_name != name:
         return None
-    if session.get("ld_role") is None:
+    if session.get("ld_role") is None or session.get("ld_favorite_color") is None:
         prof = ld_profile_for_display_name(name)
         session["ld_role"] = prof["role"]
         session["ld_location"] = prof["location"]
         session["ld_org_team"] = prof["org_team"]
         session["ld_org_team_size"] = prof["org_team_size"]
+        session["ld_favorite_color"] = prof["favorite_color"]
+        session["ld_favorite_color_code"] = prof["favorite_color_code"]
     return build_multi_context(
         display_name=name,
         role=str(session["ld_role"]),
         location=str(session["ld_location"]),
         org_team=str(session["ld_org_team"]),
         org_team_size=int(session["ld_org_team_size"]),
+        favorite_color=str(session["ld_favorite_color"]),
+        favorite_color_code=str(session["ld_favorite_color_code"]),
     )
 
 
@@ -276,10 +282,13 @@ def login():
         session["nav_case"] = "lower"
         session.pop("_ld_ui_color_mode_metric_sent", None)
         org_team, org_team_size = random.choice(LD_ORG_TEAMS)
+        favorite_color = random.choice(LD_FAVORITE_COLORS)
         session["ld_role"] = random.choice(LD_ROLES)
         session["ld_location"] = random.choice(LD_LOCATIONS)
         session["ld_org_team"] = org_team
         session["ld_org_team_size"] = org_team_size
+        session["ld_favorite_color"] = favorite_color
+        session["ld_favorite_color_code"] = LD_FAVORITE_COLOR_CODES[favorite_color]
         return redirect(url_for("upper_left"))
     if session.get("name"):
         return redirect(url_for("upper_left"))

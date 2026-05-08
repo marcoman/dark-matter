@@ -23,6 +23,24 @@ LD_ORG_TEAMS: tuple[tuple[str, int], ...] = (
     ("Sales", 15),
     ("Finance", 20),
 )
+LD_FAVORITE_COLORS: tuple[str, ...] = (
+    "Red",
+    "Orange",
+    "Yellow",
+    "Green",
+    "Blue",
+    "Indigo",
+    "Violet",
+)
+LD_FAVORITE_COLOR_CODES: dict[str, str] = {
+    "Red": "#FF0000",
+    "Orange": "#FFA500",
+    "Yellow": "#FFFF00",
+    "Green": "#008000",
+    "Blue": "#0000FF",
+    "Indigo": "#4B0082",
+    "Violet": "#EE82EE",
+}
 
 
 def _stable_seed(display_name: str) -> int:
@@ -33,11 +51,14 @@ def ld_profile_for_display_name(display_name: str) -> dict[str, str | int]:
     """Stable pseudo-random traits for a display name (migration / offline tools only)."""
     r = random.Random(_stable_seed(display_name))
     org_team, org_team_size = r.choice(LD_ORG_TEAMS)
+    favorite_color = r.choice(LD_FAVORITE_COLORS)
     return {
         "role": r.choice(LD_ROLES),
         "location": r.choice(LD_LOCATIONS),
         "org_team": org_team,
         "org_team_size": org_team_size,
+        "favorite_color": favorite_color,
+        "favorite_color_code": LD_FAVORITE_COLOR_CODES[favorite_color],
     }
 
 
@@ -47,12 +68,17 @@ def build_multi_context(
     location: str,
     org_team: str,
     org_team_size: int,
+    favorite_color: str,
+    favorite_color_code: str,
 ) -> Context:
     user_ctx = (
         Context.builder(f"user-{display_name}")
         .name(display_name)
         .set("role", role)
         .set("location", location)
+        .set("favorite_color", favorite_color)
+        .set("favorite_color_code", favorite_color_code)
+        .private("favorite_color", "favorite_color_code")
         .build()
     )
     org_ctx = (
